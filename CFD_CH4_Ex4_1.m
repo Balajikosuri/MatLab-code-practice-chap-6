@@ -19,23 +19,39 @@ fprintf('Computed Internal Temperatures:\n');
 disp(T_internal);
 
 % Define total number of nodes (including boundaries)
-N = length(T_internal);
-L = 0.5; % Length of the rod (m)
+N = length(T_internal);  
+L = 0.5;  % Length of the rod (m)
+dx = L / N;  % Uniform spacing
 
-% Define x-coordinates including boundary points
-x_full = linspace(0, L, N + 2); % Including boundaries at x=0 and x=L
+% Compute x-values (cell centers) using the correct formula
+P = 1:N;  % Node indices
+x_P = 0 + (P - 0.5) * dx;  % Apply x_P = x_0 + (P - 1/2) * dx
+
+% Include boundary points
+x_full = [0, x_P, L];  
+disp(['Number of x_full points: ', num2str(length(x_full))]);
 
 % Full temperature distribution (including boundary temperatures)
 T_full = [100; T_internal; 500];
 
+% Analytical solution T(x) = 800x + 100
+x_analytical = linspace(0, L, 100);
+T_analytical = 800 * x_analytical + 100;
+disp('x_analytical')
+disp(x_analytical)
+
 % Plot Temperature Distribution
 figure;
-plot(x_full, T_full, 'ro-', 'LineWidth', 2, 'MarkerSize', 8);
+plot(x_full, T_full, 'rs-', 'LineWidth', 2, 'MarkerSize', 8, 'MarkerFaceColor', 'r');
+hold on;
+plot(x_analytical, T_analytical, 'b-', 'LineWidth', 2);
+hold off;
+
 xlabel('Distance along the rod (m)');
 ylabel('Temperature (°C)');
-title('Temperature Distribution (Solution of Equation 4.23)');
+title('Temperature Distribution (Numerical vs Analytical)');
 grid on;
-legend('Temperature Profile');
+legend('Numerical Solution', 'Analytical Solution');
 
 % Mark Internal Node Values on the Plot
 for i = 1:N
