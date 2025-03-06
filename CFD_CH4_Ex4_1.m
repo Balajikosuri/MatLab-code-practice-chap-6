@@ -1,46 +1,66 @@
-% MATLAB Code to Solve Equation 4.23 (Steady-State 1D Heat Conduction)
 clc; clear; close all;
 
-% Define the coefficient matrix A
-A = [-300  100   0    0    0;
-      100 -200  100    0    0;
-       0   100 -200  100    0;
-       0    0   100 -200  100;
-       0    0    0   100 -300];
+% Given Data
+L = 0.5;       % Length of the rod (m)
+N = 5;         % Number of internal nodes
+T_A = 100;     % Left boundary temperature (°C)
+T_B = 500;     % Right boundary temperature (°C)
+k = 1000;      % Thermal conductivity (W/m·K)
+A_cross = 0.01; % Cross-sectional area (m²)
 
-% Define the right-hand side (RHS) vector b
-b = [-200*100; 0; 0; 0; -200*500];
+% Compute grid spacing using dx = L/N
+dx = L / N;
 
-% Solve for Temperature Vector T using MATLAB's built-in solver
-T_internal = A \ b;
+% Compute coefficients
+a_W = (k * A_cross) / dx;  
+a_E = (k * A_cross) / dx;  
 
-% Display computed internal temperatures
-fprintf('Computed Internal Temperatures:\n');
-disp(T_internal);
+% Initialize Coefficient Matrix A and RHS Vector B
+A = zeros(N, N);
+B = zeros(N, 1);
 
-% Define total number of nodes (including boundaries)
-N = length(T_internal);  
-L = 0.5;  % Length of the rod (m)
-dx = L / N;  % Uniform spacing
+% Construct Coefficient Matrix A and RHS Vector B using For Loop
+for i = 1:N
+    if i == 1  % Left Boundary Node (P = 1)
+        A(i, i) = (a_E + 2 * a_W);
+        A(i, i+1) = -a_E;
+        B(i) = 2 * a_W * T_A;  % Apply left boundary contribution
+    elseif i == N  % Right Boundary Node (P = N)
+        A(i, i) = (2 * a_E + a_W);
+        A(i, i-1) = -a_W;
+        B(i) = 2 * a_E * T_B;  % Apply right boundary contribution
+    else  % Internal Nodes (2 ≤ P ≤ N-1)
+        A(i, i) = (a_W + a_E);
+        A(i, i-1) = -a_W;
+        A(i, i+1) = -a_E;
+        B(i) = 0;  % No source term in internal nodes
+    end
+end
 
-% Compute x-values (cell centers) using the correct formula
+% Solve for Internal Node Temperatures (T)
+T_internal = A \ B;
+
+% Compute x-values (cell centers) using x_P = (P - 0.5) * dx
 P = 1:N;  % Node indices
-x_P = 0 + (P - 0.5) * dx;  % Apply x_P = x_0 + (P - 1/2) * dx
+x_P = (P - 0.5) * dx;  % Apply correct positioning formula
 
 % Include boundary points
 x_full = [0, x_P, L];  
-disp(['Number of x_full points: ', num2str(length(x_full))]);
+T_full = [T_A; T_internal; T_B];  % Full temperature distribution
 
-% Full temperature distribution (including boundary temperatures)
-T_full = [100; T_internal; 500];
-
-% Analytical solution T(x) = 800x + 100
+% Compute Analytical Solution: T(x) = 800x + 100
 x_analytical = linspace(0, L, 100);
 T_analytical = 800 * x_analytical + 100;
-disp('x_analytical')
-disp(x_analytical)
 
-% Plot Temperature Distribution
+% Display Matrices
+fprintf('Coefficient Matrix A:\n');
+disp(A);
+fprintf('RHS Vector B:\n');
+disp(B);
+fprintf('Computed Internal Temperatures:\n');
+disp(T_internal);
+
+% Plot Numerical vs Analytical Solution
 figure;
 plot(x_full, T_full, 'rs-', 'LineWidth', 2, 'MarkerSize', 8, 'MarkerFaceColor', 'r');
 hold on;
