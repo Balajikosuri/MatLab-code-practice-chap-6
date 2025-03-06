@@ -1,5 +1,5 @@
 clc; clear; close all;
-
+% Temp distribution in 1D steady sate source free 
 % Given Data
 L = 0.5;       % Length of the rod (m)
 N = 5;         % Number of internal nodes
@@ -39,11 +39,11 @@ end
 
 % Solve for Internal Node Temperatures (T)
 T_internal = A \ B;
-
+% change
 % Compute x-values (cell centers) using x_P = (P - 0.5) * dx
 P = 1:N;  % Node indices
 x_P = (P - 0.5) * dx;  % Apply correct positioning formula
-
+disp(x_P)
 % Include boundary points
 x_full = [0, x_P, L];  
 T_full = [T_A; T_internal; T_B];  % Full temperature distribution
