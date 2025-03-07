@@ -7,7 +7,7 @@ T_A = 100;     % Left boundary temperature (°C)
 T_B = 500;     % Right boundary temperature (°C)
 k = 1000;      % Thermal conductivity (W/m·K)
 A_cross = 0.01; % Cross-sectional area (m²)
-
+S_p = 0;
 % Compute grid spacing using dx = L/N
 dx = L / N;
 
@@ -16,26 +16,8 @@ a_W = (k * A_cross) / dx;
 a_E = (k * A_cross) / dx;  
 
 % Initialize Coefficient Matrix A and RHS Vector B
-A = zeros(N, N);
-B = zeros(N, 1);
 
-% Construct Coefficient Matrix A and RHS Vector B using For Loop
-for i = 1:N
-    if i == 1  % Left Boundary Node (P = 1)
-        A(i, i) = (a_E + 2 * a_W);
-        A(i, i+1) = -a_E;
-        B(i) = 2 * a_W * T_A;  % Apply left boundary contribution
-    elseif i == N  % Right Boundary Node (P = N)
-        A(i, i) = (2 * a_E + a_W);
-        A(i, i-1) = -a_W;
-        B(i) = 2 * a_E * T_B;  % Apply right boundary contribution
-    else  % Internal Nodes (2 ≤ P ≤ N-1)
-        A(i, i) = (a_W + a_E);
-        A(i, i-1) = -a_W;
-        A(i, i+1) = -a_E;
-        B(i) = 0;  % No source term in internal nodes
-    end
-end
+[A,B] = TriDiagonlCoeffMatrix(N, a_W, a_E, T_A, T_B,S_p);
 
 % Solve for Internal Node Temperatures (T)
 T_internal = A \ B;
