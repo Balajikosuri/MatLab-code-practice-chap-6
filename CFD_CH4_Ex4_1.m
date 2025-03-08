@@ -1,5 +1,8 @@
 clc; clear; close all;
 % Temp distribution in 1D steady sate source free 
+% Temperature Distribution: Numerical vs Analytical
+% 1D steady-state heat conduction in a rod without internal heat generation
+
 % Given Data
 L = 0.5;       % Length of the rod (m)
 N = 5;         % Number of internal nodes
@@ -21,18 +24,21 @@ a_E = (k * A_cross) / dx;
 
 % Solve for Internal Node Temperatures (T)
 T_internal = A \ B;
-% change
+
 % Compute x-values (cell centers) using x_P = (P - 0.5) * dx
 P = 1:N;  % Node indices
 x_P = (P - 0.5) * dx;  % Apply correct positioning formula
-disp(x_P)
+
 % Include boundary points
 x_full = [0, x_P, L];  
 T_full = [T_A; T_internal; T_B];  % Full temperature distribution
 
 % Compute Analytical Solution: T(x) = 800x + 100
-x_analytical = linspace(0, L, 100);
-T_analytical = 800 * x_analytical + 100;
+% x_analytical = linspace(0, L, 100);
+T_analytical = ((T_B-T_A)/L).*(x_full) + T_A;
+
+disp('x_full')
+disp(x_full)
 
 % Display Matrices
 fprintf('Coefficient Matrix A:\n');
@@ -46,12 +52,13 @@ disp(T_internal);
 figure;
 plot(x_full, T_full, 'rs-', 'LineWidth', 2, 'MarkerSize', 8, 'MarkerFaceColor', 'r');
 hold on;
-plot(x_analytical, T_analytical, 'b-', 'LineWidth', 2);
+plot(x_full, T_analytical, 'b-', 'LineWidth', 2);
 hold off;
 
 xlabel('Distance along the rod (m)');
 ylabel('Temperature (°C)');
-title('Temperature Distribution (Numerical vs Analytical)');
+title('Temperature Distribution: Numerical vs Analytical','FontSize', 14);
+subtitle('1D steady-state heat conduction in a rod without internal heat generation', 'FontSize', 12);
 grid on;
 legend('Numerical Solution', 'Analytical Solution');
 
