@@ -1,5 +1,7 @@
 clc; clear; close all;
-%  1 D steady state Diffusion equation problem with sources 
+%  1 D steady state Diffusion equation problem with sources
+% Temperature Distribution in a Rod with Internal Heat Generation (Example 4.2)
+
 
 % Define x-coordinates (cell centers)
 L = 0.02; % Plate thickness (m)
@@ -39,8 +41,12 @@ disp(x_analytical)
 % Full temperature distribution including boundaries
 T_full = [T_A; T_internal; T_B ];  
 
-% Compute analytical temperature using the equation
-T_analytical = -10.^6 * (x_analytical).^2+25000*x_analytical+100;
+c_1 = (T_B - T_A)/L + (q*L)/(2*k);
+c_2 = T_A;
+% disp('c2')
+% disp(c_2)
+% Compute analytical temperature usin*g the equation
+T_analytical = -q*(x_analytical.^2)/(2*k) + c_1*x_analytical+c_2;
 disp("T_analytical")
 disp(T_analytical)
 
@@ -50,10 +56,12 @@ plot(x_analytical, T_full, 'rs-', 'LineWidth', 2, 'MarkerSize', 8, 'MarkerFaceCo
 hold on;
 plot(x_analytical, T_analytical, 'b-', 'LineWidth', 2);
 hold off;
+title('Temperature Distribution: Numerical vs Analytical','FontSize', 14);
+subtitle('Temperature Distribution in a Rod with Internal Heat Generation (Example 4.2)', 'FontSize', 12);
 
 xlabel('Position (m)');
 ylabel('Temperature (°C)');
-title('Temperature Distribution: Numerical vs Analytical');
+
 legend('Numerical (FVM)', 'Analytical');
 grid on;
 
