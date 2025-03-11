@@ -5,7 +5,7 @@ clc; clear; close all;
 
 % Define x-coordinates (cell centers)
 L = 0.02; % Plate thickness (m)
-N = 5; % Number of nodes
+N = 10; % Number of nodes
 k = 0.5; % Thermal conductivity (W/m.K)
 q = 1000*1000; % Heat generation (W/m^3)
 A = 1;
@@ -52,20 +52,20 @@ disp(T_analytical)
 
 % Plot results
 figure;
-plot(x_analytical, T_full, 'rs-', 'LineWidth', 2, 'MarkerSize', 8, 'MarkerFaceColor', 'r');
+plot(x_analytical*100, T_full, 'rs-', 'LineWidth', 2, 'MarkerSize', 8, 'MarkerFaceColor', 'r');
 hold on;
-plot(x_analytical, T_analytical, 'b-', 'LineWidth', 2);
+plot(x_analytical*100, T_analytical, 'b-', 'LineWidth', 2);
 hold off;
 title('Temperature Distribution: Numerical vs Analytical','FontSize', 14);
 subtitle('Temperature Distribution in a Rod with Internal Heat Generation (Example 4.2)', 'FontSize', 12);
 
-xlabel('Position (m)');
+xlabel('Distance (cm)');
 ylabel('Temperature (°C)');
 
 legend('Numerical (FVM)', 'Analytical');
 grid on;
 
 % Annotate values
-for i = 1:N
-    text(x_analytical(i+1), T_internal(i) + 5, sprintf('T%d = %.2f°C', i, T_internal(i)), 'FontSize', 10, 'Color', 'black');
-end
+% for i = 1:N
+%     text(x_analytical(i+1), T_internal(i) + 5, sprintf('T%d = %.2f°C', i, T_internal(i)), 'FontSize', 10, 'Color', 'black');
+% end
