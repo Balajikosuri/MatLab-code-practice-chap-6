@@ -7,8 +7,8 @@ Ly = 1.0;  % Length in y-direction (m)
 % Grid parameters
 Nx = 4;  % Number of control volumes in x-direction
 Ny = 4;  % Number of control volumes in y-direction
-dx = Lx / Nx-1;
-dy = Ly / Ny-1;
+dx = Lx / Nx;
+dy = Ly / Ny;
 
 % Thermal conductivity
 k = 1000; % W/(m·K)
@@ -19,21 +19,21 @@ T = zeros(Ny+1, Nx+1);
 % Apply Dirichlet Boundary Conditions
 T(:, 1)   = 400; % Left boundary (x = 0)
 T(:, end) = 300; % Right boundary (x = Lx)
-T(1, :)   = 500; % Top boundary (y = Ly)
-T(end, :) = 200; % Bottom boundary (y = 0)
+T(1, :)   = 200; % Top boundary (y = Ly)
+T(end, :) = 500; % Bottom boundary (y = 0)
 fprintf('The Initial Matrix With all Boundaries(Top Left Right Bottom Left \n')
 disp(T)
 % Finite Volume Coefficients
-aW = k;
-aE = k;
-aN = k ;
-aS = k ;
+aW = k / dx;
+aE = k / dx;
+aN = k / dy;
+aS = k / dy;
 
 % Modify coefficients near boundaries
-aW_b = 2 * k; 
-aE_b = 2 * k; 
-aN_b = 2 * k ; 
-aS_b = 2 * k ; 
+aW_b = 2 * k / dx; 
+aE_b = 2 * k / dx; 
+aN_b = 2 * k / dy; 
+aS_b = 2 * k / dy; 
 
 % Iterative solver (Gauss-Seidel)
 tol = 1e-6;
@@ -43,15 +43,12 @@ iter = 0;
 
 while error > tol && iter < maxIter
     T_old = T;
-
+    
     % Update interior points
     for i = 2:Nx
         for j = 2:Ny
-            
             if i == 2  % Near left boundary
                 aW_eff = aW_b;
-                % fprintf('(%d,%d)',j,i)
-                % fprintf('\n the aP = %d\n)',aP)
             else
                 aW_eff = aW;
             end
@@ -62,17 +59,16 @@ while error > tol && iter < maxIter
                 aE_eff = aE;
             end
 
-            if j == 2  % Near bottom boundary (edit to top)
-                % fprintf('(%d,%d)',j,i)
-                aN_eff = aN_b;
-            else
-                aN_eff = aN;
-            end
-
-            if j == Ny  % Near top boundary (edit to bottom)
+            if j == 2  % Near bottom boundary
                 aS_eff = aS_b;
             else
                 aS_eff = aS;
+            end
+
+            if j == Ny  % Near top boundary
+                aN_eff = aN_b;
+            else
+                aN_eff = aN;
             end
 
             % Compute new temperature using FVM equation
@@ -96,10 +92,10 @@ disp(['Converged in ', num2str(iter), ' iterations with error ', num2str(error)]
 
 % Plot solution
 figure;
-contourf(flipud(T), 12, 'LineColor', 'none'); 
+contourf(flipud(T), 12, 'LineColor', 'none'); % Increase from 20 to 50 levels
 colorbar;
-clim([200 500]); 
-colormap(jet);
+clim([200 500]); % Fix color range
+colormap(jet); % Match Python's color map
 title('2D Heat Conduction - Finite Volume Method');
-xlabel('x (m)');
-ylabel('y (m)');
+xlabel('x');
+ylabel('y');
