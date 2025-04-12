@@ -65,39 +65,3 @@ function [A, B] = TriDiagonalCoeffMatrix(varargin)
         end
     end
 end
-
-
-
-
-
-
-
-
-
-
-
-% function [A, B] = TriDiagonlCoeffMatrix(N, a_W, a_E, T_A, T_B,S_p,S_u,q_R)
-% 
-%     %fron here start to
-%     for i = 1:N
-%         if i == 1  % Left Boundary Node (P = 1)
-%             % ap = aw+aE-sp aW =(D-F/2) aE = (D+F/2)
-%             % A(i, i) = (0 + (D-F/2)+ (2*D+F));
-%             A(i, i) = 3*D-(F/2);
-%             A(i, i+1) = -a_E;
-%             B(i) = (2*D+F)*phi_A;  % Apply left boundary contribution 
-%         elseif i == N  % Right Boundary Node (P = N)
-%             % ap = aw+aE-sp
-%             % A(i, i) = ((D-F/2)+0 +(2*D-F)); i.e
-%             A(i,i) = 3*D-3*(F/2);
-%             A(i, i-1) = -a_W;
-%             B(i) = (2*D-F)*phi_A;  % Apply right boundary contribution
-%         else  % Internal Nodes (2 ≤ P ≤ N-1)
-%             A(i, i) = (a_W + a_E);
-%             A(i, i-1) = -a_W;
-%             A(i, i+1) = -a_E;
-%             B(i) = 0;  % No source term in internal nodes
-%         end
-%     end
-%     % here code every this fine but write the name value function 
-% end
