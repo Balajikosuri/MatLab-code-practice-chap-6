@@ -6,7 +6,7 @@ Gamma = 0.1;     % Diffusion coefficient (kg/m/s)
 rho = 1.0;       % Density (kg/m³)
 u0 = 1.0;        % Base velocity (m/s)
 alpha = 1.0;     % Linear growth factor for u(x)
-N = 5;          % Number of control volumes
+N = 5;           % Number of control volumes
 dx = L / N;      % Width of control volume
 
 % Discretize space
@@ -40,22 +40,23 @@ for i = 1:N
     % Diffusion coefficients
     D_W = Gamma / dx;
     D_E = Gamma / dx;
+    D   = Gamma / dx;
 
     if i == 1
         % Left boundary node
         a_E = D_E - F_E / 2;
-        a_P = a_E + -2*D_W-F;
+        a_P = a_E + -2*D-F;
         A(i, i) = a_P;
         A(i, i+1) = -a_E;
-        B(i) = (2*D_W+F) * phi_A;
+        B(i) = (2*D + F) * phi_A;
 
     elseif i == N
         % Right boundary node
         a_W = D_W + F_W / 2;
-        a_P = a_W + -2*D_E +F;
+        a_P = a_W + -2*D +F;
         A(i, i) = a_P;
         A(i, i-1) = -a_W;
-        B(i) = (2*D_E - F) * phi_B;
+        B(i) = (2*D - F) * phi_B;
 
     else
         % Internal node
@@ -83,7 +84,7 @@ x_P = (P - 0.5) * dx;  % Apply x_P = x_0 + (P - 1/2) * dx
 % Include boundary points
 x_analytical = [0, x_P, L];
 u_x = u0 * (1 + alpha * x_analytical / L);
-Pe_x = rho * u_x / Gamma;
+
 
 % Compute integrating factor:
 % φ(x) = 1 - ∫₀ˣ μ(s) ds / ∫₀ᴸ μ(s) ds
