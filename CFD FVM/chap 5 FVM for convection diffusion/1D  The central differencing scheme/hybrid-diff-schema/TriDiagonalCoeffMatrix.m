@@ -42,19 +42,19 @@ function [A, B] = TriDiagonalCoeffMatrix(varargin)
     B = zeros(N, 1);
 
     % Define coefficients
-    a_W = D + F;  % West coefficient
-    a_E = D;  % East coefficient
+    a_W = D + F/2;  % West coefficient
+    a_E = D - F/2;  % East coefficient
 
     % Loop over each node in the grid
     for i = 1:N
         if i == 1  % Left Boundary Node (P = 1)
-            A(i, i) = D-(2*D+F);  % Modified coefficient for boundary
+            A(i, i) = 3*D + (F/2);  % Modified coefficient for boundary
             A(i, i+1) = -a_E;  % East neighbor
             B(i) = (2*D + F) * phi_A;  % Apply left boundary flux
 
         elseif i == N  % Right Boundary Node (P = N)
             A(i, i) = 3*D - F/2;  % Modified coefficient for boundary
-            A(i, i-1) = -D;  % West neighbor
+            A(i, i-1) = -a_W;  % West neighbor
             B(i) = (2*D - F) * phi_B;  % Apply right boundary flux
 
         else  % Internal Nodes (2 ≤ P ≤ N-1)

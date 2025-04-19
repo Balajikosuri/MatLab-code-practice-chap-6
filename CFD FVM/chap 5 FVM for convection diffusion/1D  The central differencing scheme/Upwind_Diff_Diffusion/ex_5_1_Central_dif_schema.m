@@ -9,7 +9,7 @@ phi_A = 1; % Left boundary condition
 phi_B = 0; % Right boundary condition
 
 % Define different values of U (velocity) and N (grid points)
-U_values = [0.1, 2.5];  % Cases: Low and high velocity
+U_values = [0.1, 2.5];% Cases: Low and high velocity
 N_values = [5,];     % Cases: Coarse and fine grid
 
 % Loop through each combination of U and N
