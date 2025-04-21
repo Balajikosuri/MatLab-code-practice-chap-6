@@ -1,4 +1,4 @@
-function [A, B] = TriDiagonalCoeffMatrix(varargin)
+function [A, B] = CDSTriDiagonalCoeffMatrix(varargin)
     % TriDiagonalCoeffMatrix: Generates the coefficient matrix A and source vector B
     % for a 1D convection-diffusion problem using the central differencing scheme.
     %
