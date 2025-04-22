@@ -1,4 +1,4 @@
-function [A, B] = TriDiagonalCoeffMatrix(varargin)
+function [A, B] = CDSTriDiagonalCoeffMatrix(varargin)
     % TriDiagonalCoeffMatrix: Generates the coefficient matrix A and source vector B
     % for a 1D convection-diffusion problem using the central differencing scheme.
     %
@@ -32,6 +32,7 @@ function [A, B] = TriDiagonalCoeffMatrix(varargin)
     F = p.Results.Convection;
     phi_A = p.Results.PhiLeft;
     phi_B = p.Results.PhiRight;
+    
     % Default source terms (zero by default)
     S_p = zeros(N, 1);
     S_u = zeros(N, 1);
@@ -41,26 +42,26 @@ function [A, B] = TriDiagonalCoeffMatrix(varargin)
     B = zeros(N, 1);
 
     % Define coefficients
-    a_W = D + F;  % West coefficient
-    a_E = D;  % East coefficient
+    a_W = D + F/2;  % West coefficient
+    a_E = D - F/2;  % East coefficient
 
     % Loop over each node in the grid
     for i = 1:N
         if i == 1  % Left Boundary Node (P = 1)
-            A(i, i) = 3*D+F;  % Modified coefficient for boundary
+            A(i, i) = 3*D + (F/2);  % Modified coefficient for boundary
             A(i, i+1) = -a_E;  % East neighbor
             B(i) = (2*D + F) * phi_A;  % Apply left boundary flux
 
         elseif i == N  % Right Boundary Node (P = N)
-            A(i, i) = 3*D+F;  % Modified coefficient for boundary
+            A(i, i) = 3*D - F/2;  % Modified coefficient for boundary
             A(i, i-1) = -a_W;  % West neighbor
-            B(i) = 2*D*phi_B;  % Apply right boundary flux
+            B(i) = (2*D - F) * phi_B;  % Apply right boundary flux
 
         else  % Internal Nodes (2 ≤ P ≤ N-1)
-            A(i, i) = a_W + a_E ;  % Central coefficient with source term
+            A(i, i) = a_W + a_E - S_p(i);  % Central coefficient with source term
             A(i, i-1) = -a_W;  % West neighbor
             A(i, i+1) = -a_E;  % East neighbor
-            B(i) = 0;  % Source term contribution+
+            B(i) = S_u(i);  % Source term contribution
         end
     end
 end

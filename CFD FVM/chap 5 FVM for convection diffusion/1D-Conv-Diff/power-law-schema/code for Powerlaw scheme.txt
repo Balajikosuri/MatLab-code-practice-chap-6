@@ -1,0 +1,114 @@
+clc; clear; close all;
+
+%% ------------------ Physical and Boundary Conditions ------------------
+U      = 2.5;      % Convection velocity
+N      = 5;       % Number of control volumes
+L      = 1.0;      % Domain length
+Gamma  = 0.1;      % Diffusion coefficient
+rho    = 1.0;      % Density
+phi_A  = 1;        % Left boundary value
+phi_B  = 0;        % Right boundary value
+
+%% ------------------ Discretization Parameters ------------------
+dx     = L / N;               % Control volume size
+P = 1:N;
+x_P = (P - 0.5) * dx;
+
+% Flux values
+F = rho * U;
+D = Gamma / dx;
+Pe = F/D;
+Dw = D;
+De = D;
+Fw = F;
+Fe = F;
+Pe_w = Pe;
+Pe_e = Pe;
+
+% Power-law scheme function handle
+aW = Dw * max(0, (1 - 0.1 * abs(Pe_w))^5) + max(F, 0);
+aE = De * max(0, (1 - 0.1 * abs(Pe_e))^5) + max(-F, 0);
+
+%% ------------------ Matrix Initialization ------------------
+A = zeros(N, N);
+b = zeros(N, 1);
+
+% Apply boundary conditions
+% A(1,1)     = 1;   b(1)   = phi_A;
+% A(end,end) = 1;   b(end) = phi_B;
+
+%% ------------------ Assemble Internal Nodes ------------------
+for i = 1:N
+    if i == 1
+        b(i) = (2*D * max(0, (1 - 0.1 * abs(2*Pe_w))^5) + max(F, 0))*phi_A;
+        aP = 0 + aE;
+        A(i, i) = aP;
+        A(i, i+1) = -aE;
+        
+    elseif i == N
+        b(i) =(2*D*max(0, (1 - 0.1 * abs(2*Pe_e))^5) + max(-F, 0))*phi_B;
+        aP = aW + 0;
+        A(i, i-1) = -aW;
+        A(i, i) = aP;
+    else
+        aP = aW + aE;
+        A(i, i-1) = -aW;
+        A(i, i) = aP;
+        A(i, i+1) = -aE;
+        
+    end
+   
+end
+
+%% ------------------ Solve Linear System ------------------
+phi = A \ b;
+
+%% ------------------ Analytical Solution Function ------------------
+function phi = AnalyticalSolution(varargin)
+    % Parse inputs using Name-Value pairs
+    p = inputParser;
+    addParameter(p, 'U', 1);
+    addParameter(p, 'rho', 1);
+    addParameter(p, 'Gamma', 0.1);
+    addParameter(p, 'L', 1);
+    addParameter(p, 'x', []);
+    addParameter(p, 'phi_A', 1);
+    addParameter(p, 'phi_B', 0);
+    parse(p, varargin{:});
+
+    % Extract parsed variables
+    U      = p.Results.U;
+    rho    = p.Results.rho;
+    Gamma  = p.Results.Gamma;
+    L      = p.Results.L;
+    x      = p.Results.x;
+    phi_A  = p.Results.phi_A;
+    phi_B  = p.Results.phi_B;
+
+    % Analytical solution for 1D steady-state convection-diffusion
+    exponent    = (rho * U * x) / Gamma;
+    denominator = exp((rho * U * L) / Gamma) - 1;
+    numerator   = exp(exponent) - 1;
+    phi         = phi_A + (phi_B - phi_A) * (numerator / denominator);
+end
+
+%% ------------------ Post-processing and Plotting ------------------
+x_analytical = [0, x_P, L];
+phi_analytical = AnalyticalSolution('U', U, 'rho', rho, 'Gamma', Gamma, ...
+                                    'L', L, 'x', x_analytical, ...
+                                    'phi_A', phi_A, 'phi_B', phi_B);
+phi_FVM = [phi_A; phi,phi_B];
+
+figure;
+hold on;
+plot(x_analytical, phi_FVM, 'rs-', 'LineWidth', 2, 'MarkerSize', 8, ...
+    'DisplayName', 'FVM (Power-Law Scheme)');
+plot(x_analytical, phi_analytical, 'b--', 'LineWidth', 2, ...
+    'DisplayName', 'Analytical Solution');
+
+title(sprintf('Numerical vs Analytical Solution (U = %.1f, N = %d)', U, N), 'FontSize', 14);
+xlabel('Distance (m)', 'FontSize', 14);
+ylabel('\phi', 'FontSize', 14);
+legend('Location', 'best');
+grid on;
+hold off;
