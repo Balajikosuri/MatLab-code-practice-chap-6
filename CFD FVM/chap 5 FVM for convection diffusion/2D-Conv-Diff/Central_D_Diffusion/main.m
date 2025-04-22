@@ -1,5 +1,5 @@
 clear; clc; close all;
-%Gauss sidel method
+%% Gauss sidel method
 % Domain size
 Lx = 3;  % Length in x-direction (m)
 Ly = 3;  % Length in y-direction (m)
@@ -11,13 +11,10 @@ a =  10;
 b = 2;
 u = 1;        % Velocity of the fluid along X axis 
 v = 4;        % Velocity of the fluid along Y axis 
-%%
-
-
 
 %% Grid parameters
-Nx = 3;  % Number of control volumes in x-direction
-Ny = 3;  % Number of control volumes in y-direction
+Nx = 20;  % Number of control volumes in x-direction
+Ny = 20;  % Number of control volumes in y-direction
 dx = Lx / Nx;
 dy = Ly / Ny;
 %% convection Diffusion Coeff
@@ -34,15 +31,15 @@ D_A = 2*D;
 D_B = 2*D;
 
 %% Initialize temperature field
-T = zeros(Ny+2, Nx+2);
+phi = zeros(Ny+2, Nx+2);
 
 % Apply Dirichlet Boundary Conditions
-T(:, 1)   = 100; % Left boundary (x = 0)
-T(:, end) = 0; % Right boundary (x = Lx)
-T(1, :)   = 0; % Top boundary (y = Ly)
-T(end, :) = 100; % Bottom boundary (y = 0)
+phi(:, 1)   = 100; % Left boundary (x = 0)
+phi(:, end) = 0; % Right boundary (x = Lx)
+phiT(1, :)   = 0; % Top boundary (y = Ly)
+phi(end, :) = 100; % Bottom boundary (y = 0)
 fprintf('The Initial Matrix With all Boundaries(Top Left Right Bottom Left \n')
-disp(T)
+disp(phi)
 
 %% Finite Volume Coefficients
 aW = D_w + F_w/2;
@@ -62,7 +59,7 @@ error = 1;
 iter = 0;
 
 while error > tol
-    T_old = T;
+    phi_old = phi;
     
     % Update interior points
     for i = 2:Nx+1
@@ -73,42 +70,42 @@ while error > tol
             else
                 aW_eff = aW;
             end
-
+%%
             if i == Nx+1  % Near right boundary
                 % fprintf(' right boundary - %d,%d\n',j,i)
                 aE_eff = aE_b;
             else
                 aE_eff = aE;
             end
-
+%%
             if j == 2  % Near Top boundary
                 % fprintf('  Top boundary - %d,%d\n',j,i)
                 aS_eff = aS_b;
             else
                 aS_eff = aS;
             end
-
+%%
             if j == Ny+1  % Near Bottom boundary
                 % fprintf('   Bottom boundary - (%d,%d)\n',j,i)
                 aN_eff = aN_b;
             else
                 aN_eff = aN;
             end
-
+%%
             % Compute new temperature using FVM equation
             aP = aW_eff + aE_eff + aN_eff + aS_eff;
-            T(j, i) = (aE_eff * T(j, i+1) + aW_eff * T(j, i-1) + ...
-                       aN_eff * T(j+1, i) + aS_eff * T(j-1, i)) / aP;
+            phi(j, i) = (aE_eff * phi(j, i+1) + aW_eff * phi(j, i-1) + ...
+                       aN_eff * phi(j+1, i) + aS_eff * phi(j-1, i)) / aP;
         end
     end
     
     % Compute error
-    error = max(max(abs(T - T_old)));
+    error = max(max(abs(phi - phi_old)));
     iter = iter + 1;
 end
 %%
 fprintf('The Final T Matrix Temp at respective nodes internal + nearer boundary\n')
-disp(T(2:end-1, 2:end-1))
+disp(phi(2:end-1, 2:end-1))
 disp(['Converged in ', num2str(iter), ' iterations with error ', num2str(error)]);
 
 
@@ -119,9 +116,9 @@ disp(['Converged in ', num2str(iter), ' iterations with error ', num2str(error)]
 
 % Plot solution
 figure;
-contourf(flipud(T), 12, 'LineColor', 'none'); 
+contourf(flipud(phi), 12, 'LineColor', 'none'); 
 colorbar;
-clim([200 500]); % Fix color range
+%clim([200 500]); % Fix color range
 colormap(jet); % Match Python's color map
 title('2D Heat Conduction - Finite Volume Method');
 xlabel('x (m)');
