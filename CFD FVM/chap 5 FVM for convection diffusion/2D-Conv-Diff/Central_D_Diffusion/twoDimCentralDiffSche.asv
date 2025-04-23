@@ -8,11 +8,6 @@ Nx = 50;  % Number of control volumes in x-direction
 Ny = 50;  % Number of control volumes in y-direction
 dx = Lx / Nx;
 dy = Ly / Ny;
-%% Initial Boundary Phi Values 
-Phi_Left = 100;
-Phi_Right = 0;
-Phi_Top = 0;
-Phi_Bottom = 100;
 
 %% Given Data 
 rouh =  1;    % Densityu of the fluid
@@ -24,7 +19,11 @@ v = 4;        % Velocity of the fluid along Y axis
 
 
 
-
+%% Initial Boundary Phi Values 
+Phi_Left = 100;
+Phi_Right = 0;
+Phi_Top = 0;
+Phi_Bottom = 100;
 
 %% convection Diffusion Coeff
 
@@ -141,27 +140,34 @@ annotation('textbox',...
     'FontSize', 12, ...
     'FontWeight', 'bold');
 annotation('textbox',...
-    [0.0114166666666666 0.48655063291139 0.0630625 0.06856540084388],...
-    'String', {sprintf('\\phi_{Left} = %g', Phi_Left)},...
+    [0.0114166666666666 0.48655063291139 0.0630625 0.06856540084388]...
+    'String', {sprintf('\\phi_{Top} = %g', Phi_Top)},...
     'FitBoxToText','off',...
     'EdgeColor','none',...
     'FontSize', 12, ...
     'FontWeight', 'bold');
 
-annotation('textbox',...
-    [0.438020833333333 0.00843881856540084 0.14375 0.0358649789029536],...
-    'String', {sprintf('\\phi_{Bottom} = %g', Phi_Bottom)},...
-    'FitBoxToText','off',...
-    'EdgeColor','none',...
-    'FontSize', 12, ...
-    'FontWeight', 'bold');
-annotation('textbox',...
-    [0.909765625 0.518459915611814 0.0749999999999998 0.0527426160337549],...
-    'String', {sprintf('\\phi_{Right} = %g', Phi_Right)},...
-    'FitBoxToText','off',...
-    'EdgeColor','none',...
-    'FontSize', 12, ...
-    'FontWeight', 'bold');
+
+
+% % Adding x-axis label
+% xlabel(sprintf('\\phi_{Bottom} = %g                      x(m)', Phi_Bottom), 'FontSize', 12, 'FontWeight', 'bold');
+% 
+% %% Adding custom label at the top (centered at the top of the plot)
+% ax = gca;  % Get current axes
+% ax2 = axes('Position', ax.Position, 'Color', 'none', 'XAxisLocation', 'top', 'YAxisLocation', 'right');
+% set(ax2, 'XLim', ax.XLim, 'YLim', [0 1]);
+% 
+% % Adding label to secondary x-axis
+% xlabel(ax2, sprintf('\\phi_{Top} = %g', Phi_Top), 'FontSize', 12, 'FontWeight', 'bold');  % Secondary x-axis label
+% %%  Adding y-axis label (Main label)
+% ylabel( sprintf('\\phi_{Right} = %g', Phi_Right), 'FontSize', 12, 'FontWeight', 'bold'); 
+% 
+% % Create a secondary y-axis (Right side)
+% ax3 = axes('Position', ax.Position, 'Color', 'none', 'YAxisLocation', 'left', 'XAxisLocation', 'top');
+% set(ax3, 'YLim', ax.YLim, 'XLim', [0 Lx]);
+% 
+% % Adding label to secondary y-axis
+% ylabel(ax3,  sprintf('\\phi_{Left} = %g', Phi_Left), 'FontSize', 12, 'FontWeight', 'bold');  % Secondary y-axis label
 
 %%
 % Define cell-centered coordinates
