@@ -38,18 +38,6 @@ D_n = D;
 D_s = D;
 D_A = 2*D;
 D_B = 2*D;
-
-%% Initialize temperature field
-phi = zeros(Ny+2, Nx+2);
-
-% Apply Dirichlet Boundary Conditions
-phi(:, 1)   = Phi_Left; % Left boundary (x = 0)
-phi(:, end) = Phi_Right; % Right boundary (x = Lx)
-phiT(1, :)   = Phi_Top; % Top boundary (y = Ly)
-phi(end, :) = Phi_Bottom; % Bottom boundary (y = 0)
-fprintf('The Initial Matrix With all Boundaries(Top Left Right Bottom Left \n')
-disp(phi)
-
 %% Finite Volume Coefficients
 aW = D_w + F_w/2;
 aE = D_e - F_e/2;
@@ -61,6 +49,17 @@ aW_b = 2 * D_w + F_w/2 ;
 aE_b = 2 * D_e - F_e/2; 
 aN_b = 2 * D_n - F_n/2;
 aS_b = 2 * D_s + F_s/2;
+%% Initialize temperature field
+phi = zeros(Ny+2, Nx+2);
+
+% Apply Dirichlet Boundary Conditions
+phi(:, 1)   = Phi_Left; % Left boundary (x = 0)
+phi(:, end) = Phi_Right; % Right boundary (x = Lx)
+phiT(1, :)   = Phi_Top; % Top boundary (y = Ly)
+phi(end, :) = Phi_Bottom; % Bottom boundary (y = 0)
+fprintf('The Initial Matrix With all Boundaries(Top Left Right Bottom Left \n')
+disp(phi)
+
 
 %% Iterative solver (Gauss-Seidel)
 tol = 1e-6;
