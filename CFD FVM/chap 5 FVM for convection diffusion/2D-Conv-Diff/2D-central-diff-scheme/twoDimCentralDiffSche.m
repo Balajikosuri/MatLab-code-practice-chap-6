@@ -56,7 +56,7 @@ phi = zeros(Ny+2, Nx+2);
 % Apply Dirichlet Boundary Conditions
 phi(:, 1)   = Phi_Left; % Left boundary (x = 0)
 phi(:, end) = Phi_Right; % Right boundary (x = Lx)
-phiT(1, :)   = Phi_Top; % Top boundary (y = Ly)
+phi(1, :)   = Phi_Top; % Top boundary (y = Ly)
 phi(end, :) = Phi_Bottom; % Bottom boundary (y = 0)
 fprintf('The Initial Matrix With all Boundaries(Top Left Right Bottom Left \n')
 disp(phi)
