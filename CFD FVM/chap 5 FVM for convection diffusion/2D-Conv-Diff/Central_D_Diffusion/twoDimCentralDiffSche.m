@@ -17,6 +17,13 @@ Nx = 20;  % Number of control volumes in x-direction
 Ny = 20;  % Number of control volumes in y-direction
 dx = Lx / Nx;
 dy = Ly / Ny;
+
+%% Initial Boundary Phi Values 
+Phi_Left = 100;
+Phi_Right = 0;
+Phi_Top = 0;
+Phi_Bottom = 100;
+
 %% convection Diffusion Coeff
 
 F_e = rouh*u*dy; F_w = rouh*u*dy;
@@ -34,10 +41,10 @@ D_B = 2*D;
 phi = zeros(Ny+2, Nx+2);
 
 % Apply Dirichlet Boundary Conditions
-phi(:, 1)   = 100; % Left boundary (x = 0)
-phi(:, end) = 0; % Right boundary (x = Lx)
-phiT(1, :)   = 0; % Top boundary (y = Ly)
-phi(end, :) = 100; % Bottom boundary (y = 0)
+phi(:, 1)   = Phi_Left; % Left boundary (x = 0)
+phi(:, end) = Phi_Right; % Right boundary (x = Lx)
+phiT(1, :)   = Phi_Top; % Top boundary (y = Ly)
+phi(end, :) = Phi_Bottom; % Bottom boundary (y = 0)
 fprintf('The Initial Matrix With all Boundaries(Top Left Right Bottom Left \n')
 disp(phi)
 
@@ -123,3 +130,23 @@ colormap(jet); % Match Python's color map
 title('2D Heat Conduction - Finite Volume Method');
 xlabel('x (m)');
 ylabel('y (m)');
+% Define cell-centered coordinates
+Px = 1:Nx;
+Py = 1:Ny;
+xP = (Px - 0.5) * dx;
+yP = (Py - 0.5) * dy;
+[Xp, Yp] = meshgrid(xP, yP);
+
+% Extract internal phi values (removing ghost cells)
+phi_internal = phi(2:end-1, 2:end-1);
+
+% 3D Surface Plot
+figure;
+surf(Xp, Yp, flipud(phi_internal), 'EdgeColor', 'none');
+colorbar;
+colormap(jet);
+title('3D Surface Plot of \phi at Cell Centers');
+xlabel('x (m)');
+ylabel('y (m)');
+zlabel('\phi (Temperature)');
+view(45, 30); % nice viewing angle
