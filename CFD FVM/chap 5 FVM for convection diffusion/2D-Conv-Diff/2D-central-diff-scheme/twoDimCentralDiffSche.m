@@ -43,7 +43,8 @@ aW = D_w + F_w/2;
 aE = D_e - F_e/2;
 aN = D_n - F_n/2;
 aS = D_s + F_s/2;
-
+S_P = b*dx*dy;
+S_u = a*dx*dy; 
 % Modify coefficients near boundaries
 aW_b = 2 * D_w + F_w/2 ; 
 aE_b = 2 * D_e - F_e/2; 
@@ -101,9 +102,9 @@ while error > tol
             end
 %%
             % Compute new temperature using FVM equation
-            aP = aW_eff + aE_eff + aN_eff + aS_eff;
+            aP = aW_eff + aE_eff + aN_eff + aS_eff+S_P;
             phi(j, i) = (aE_eff * phi(j, i+1) + aW_eff * phi(j, i-1) + ...
-                       aN_eff * phi(j+1, i) + aS_eff * phi(j-1, i)) / aP;
+                       aN_eff * phi(j+1, i) + aS_eff * phi(j-1, i)+S_u) / aP;
         end
     end
     
