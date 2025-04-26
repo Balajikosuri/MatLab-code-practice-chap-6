@@ -32,8 +32,8 @@ v = 4;        % Velocity of the fluid along Y axis
 % F_e = rouh*u*dy; F_w = rouh*u*dy;
 % F_n = rouh*v*dx; F_s = rouh*v*dx;
 
-F_e = rouh; F_w = rouh;
-F_n = rouh; F_s = rouh;
+F_e = rouh*u; F_w = rouh*u;
+F_n = rouh*v; F_s = rouh*v;
 
 
 D = Gamma/dx; %D_e =D_w = D_n = D_s;
