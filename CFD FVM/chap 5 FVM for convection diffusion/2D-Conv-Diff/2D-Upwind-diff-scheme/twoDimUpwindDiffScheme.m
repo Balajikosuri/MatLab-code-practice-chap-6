@@ -1,5 +1,5 @@
 clear; clc; close all;
-disp('Central D.S The 2D Conv-Diff Problem');
+disp('Upwind D.S The 2D Conv-Diff Problem');
 %% Gauss sidel method
 % Domain size
 Lx = 3;  % Length in x-direction (m)
@@ -21,10 +21,7 @@ Gamma = 1;
 a =  10;
 b = 2;
 u = 1;        % Velocity of the fluid along X axis 
-v = 4;        % Velocity of the fluid along Y axis 
-
-
-
+v = 1;        % Velocity of the fluid along Y axis 
 
 
 %% convection Diffusion Coeff
@@ -32,29 +29,27 @@ v = 4;        % Velocity of the fluid along Y axis
 % F_e = rouh*u*dy; F_w = rouh*u*dy;
 % F_n = rouh*v*dx; F_s = rouh*v*dx;
 
+
 F_e = rouh; F_w = rouh;
 F_n = rouh; F_s = rouh;
 
-
-D = Gamma/dx; %D_e =D_w = D_n = D_s;
+D = Gamma/dx; %D_e = D_w = D_n = D_s;
 D_e = D;
 D_w = D;
 D_n = D;
 D_s = D;
-D_A = 2*D;
-D_B = 2*D;
 %% Finite Volume Coefficients
-aW = D_w + F_w/2;
-aE = D_e - F_e/2;
-aN = D_n - F_n/2;
-aS = D_s + F_s/2;
+aE = D_e;
+aW = D_w + F_w;
+aN = D_n ;
+aS = D_s + F_s;
 S_P = b*dx*dy;
 S_u = a*dx*dy; 
 % Modify coefficients near boundaries
-aW_b = 2 * D_w + F_w/2 ; 
-aE_b = 2 * D_e - F_e/2; 
-aN_b = 2 * D_n - F_n/2;
-aS_b = 2 * D_s + F_s/2;
+aE_b = 2 * D_e ;
+aW_b = 2 * D_w + F_w ;
+aN_b = 2 * D_n ;
+aS_b = 2 * D_s + F_s;
 %% Initialize temperature field
 phi = zeros(Ny+2, Nx+2);
 
@@ -107,9 +102,9 @@ while error > tol
             end
 %%
             % Compute new temperature using FVM equation
-            aP = aW_eff + aE_eff + aN_eff + aS_eff+S_P;
+            aP = aW_eff + aE_eff + aN_eff + aS_eff + S_P;
             phi(j, i) = (aE_eff * phi(j, i+1) + aW_eff * phi(j, i-1) + ...
-                       aN_eff * phi(j+1, i) + aS_eff * phi(j-1, i)+S_u) / aP;
+                       aN_eff * phi(j+1, i) + aS_eff * phi(j-1, i) + S_u) / aP;
         end
     end
     
@@ -120,6 +115,9 @@ end
 %%
 fprintf('The Final T Matrix Temp at respective nodes internal + nearer boundary\n')
 disp(phi(2:end-1, 2:end-1))
+disp('&');
+disp(phi)
+
 disp(['Converged in ', num2str(iter), ' iterations with error ', num2str(error)]);
 
 
@@ -134,7 +132,7 @@ contourf(flipud(phi), 12, 'LineColor', 'none');
 colorbar;
 %clim([200 500]); % Fix color range
 colormap(jet); % Match Python's color map
-title('2D Heat Conduction - Finite Volume Method 2D Central.DS');
+title('2D Heat Conduction - Finite Volume Method 2D Upwind.DS');
 xlabel('x (m)');
 ylabel('y (m)');
 %% Wall Labels 
@@ -172,17 +170,16 @@ annotation('textbox',...
 % Define cell-centered coordinates
 Px = 1:Nx;
 Py = 1:Ny;
-xP = [0,(Px - 0.5) * dx,Lx];
-yP = [0,(Py - 0.5) * dy,Ly];
+xP = (Px - 0.5) * dx;
+yP = (Py - 0.5) * dy;
 [Xp, Yp] = meshgrid(xP, yP);
 
 % Extract internal phi values (removing ghost cells)
 phi_internal = phi(2:end-1, 2:end-1);
-disp("(phi)")
-disp(phi)
+
 % 3D Surface Plot
 figure;
-surf(Xp, Yp, flipud(phi), 'EdgeColor', 'none');
+surf(Xp, Yp, flipud(phi_internal), 'EdgeColor', 'none');
 colorbar;
 colormap(jet);
 title('3D Surface Plot of \phi at Cell Centers');

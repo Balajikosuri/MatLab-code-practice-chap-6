@@ -124,7 +124,7 @@ phi_B = 0;
 U = 0.1;
 N = 5;
 U_values = [0.1,2.5];
-N_values = [5,];
+N_values = [50,];
 
 for i = 1:length(U_values)
     for j = 1:length(N_values)

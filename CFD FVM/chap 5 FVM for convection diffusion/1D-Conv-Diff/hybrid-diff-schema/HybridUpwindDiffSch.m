@@ -201,7 +201,7 @@ phi_A = 1;
 phi_B = 0;
 
 U_values = [2.5];
-N_values = [25,];
+N_values = [5,];
 
 for i = 1:length(U_values)
     for j = 1:length(N_values)
