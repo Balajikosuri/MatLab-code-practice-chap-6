@@ -1,189 +1,258 @@
 clear; clc; close all;
-disp('Upwind D.S The 2D Conv-Diff Problem');
-%% Gauss sidel method
-% Domain size
-Lx = 3;  % Length in x-direction (m)
-Ly = 3;  % Length in y-direction (m)
-%% Grid parameters
-Nx = 3;  % Number of control volumes in x-direction
-Ny = 3;  % Number of control volumes in y-direction
-dx = Lx / Nx;
-dy = Ly / Ny;
-%% Initial Boundary Phi Values 
-Phi_Left = 100;
-Phi_Right = 0;
-Phi_Top = 0;
-Phi_Bottom = 100;
+% Physical and boundary values
+Lx = 3;     Ly = 3;     
+Nx = 3;     Ny = 3;     
+dx = Lx / Nx;   dy = Ly / Ny;
 
-%% Given Data 
-rouh =  1;    % Densityu of the fluid
+Phi_Left = 100; Phi_Right = 0;
+Phi_Top = 0;    Phi_Bottom = 100;
+
+rouh = 1;    
 Gamma = 1;
-a =  10;
+a = 10;
 b = 2;
-u = 1;        % Velocity of the fluid along X axis 
-v = 1;        % Velocity of the fluid along Y axis 
+u = 1;      
+v = 4;
+[phi, iter, error] = solveConvDiff2DimByUpwindDS( ...
+    'Lx', Lx, 'Ly', Ly, ...
+    'Nx', Nx, 'Ny', Ny, ...
+    'Phi_Left', Phi_Left, 'Phi_Right', Phi_Right, ...
+    'Phi_Top', Phi_Top, 'Phi_Bottom', Phi_Bottom, ...
+    'rouh', rouh, 'Gamma', Gamma, ...
+    'a', a, 'b', b, ...
+    'u', u, 'v', v, ...
+    'tol', 1e-6);  
 
+plotPhiResultsIn2Dim3Dim( ...
+    'phi', phi, ...
+    'dx', dx, 'dy', dy, ...
+    'Nx', Nx, 'Ny', Ny, ...
+    'Phi_Left', Phi_Left, 'Phi_Right', Phi_Right, ...
+    'Phi_Top', Phi_Top, 'Phi_Bottom', Phi_Bottom, ...
+    'error', error);
 
-%% convection Diffusion Coeff
+%% function for solving 2D Upwind Diff Scheme
+function [phi, iter, error] = solveConvDiff2DimByUpwindDS(varargin)
+% This function solves the 2D convection-diffusion problem using the upwind finite volume method.
+%
+% Key-Value Inputs:
+%   'Lx', 'Ly'        - Domain size (meters)
+%   'Nx', 'Ny'        - Number of control volumes in x and y directions
+%   'Phi_Left', 'Phi_Right', 'Phi_Top', 'Phi_Bottom' - Boundary temperature values
+%   'rouh'            - Density of the fluid
+%   'Gamma'           - Diffusivity
+%   'a', 'b'          - Source terms
+%   'u', 'v'          - Velocities in x and y directions
+%   'tol'             - (optional) Tolerance for convergence (default 1e-6)
+%
+% Outputs:
+%   phi  - Temperature field
+%   iter - Number of iterations
+%   error - Final error
 
-% F_e = rouh*u*dy; F_w = rouh*u*dy;
-% F_n = rouh*v*dx; F_s = rouh*v*dx;
+    % Parse inputs
+    p = inputParser;
+    addParameter(p, 'Lx', 1);
+    addParameter(p, 'Ly', 1);
+    addParameter(p, 'Nx', 10);
+    addParameter(p, 'Ny', 10);
+    addParameter(p, 'Phi_Left', 0);
+    addParameter(p, 'Phi_Right', 0);
+    addParameter(p, 'Phi_Top', 0);
+    addParameter(p, 'Phi_Bottom', 0);
+    addParameter(p, 'rouh', 1);
+    addParameter(p, 'Gamma', 1);
+    addParameter(p, 'a', 0);
+    addParameter(p, 'b', 0);
+    addParameter(p, 'u', 0);
+    addParameter(p, 'v', 0);
+    addParameter(p, 'tol', 1e-6); % Optional, default 1e-6
+    parse(p, varargin{:});
+    args = p.Results;
 
+    % Grid and Diffusion Parameters
+    dx = args.Lx / args.Nx;
+    dy = args.Ly / args.Ny;
 
-F_e = rouh*u; F_w = rouh*u;
-F_n = rouh*v; F_s = rouh*v;
+    % Diffusion and convection coefficients
+    D = args.Gamma / dx;
+    F_e = args.rouh * args.u;
+    F_w = args.rouh * args.u;
+    F_n = args.rouh * args.v;
+    F_s = args.rouh * args.v;
+    D_e = D;
+    D_w = D;
+    D_n = D;
+    D_s = D;
 
-D = Gamma/dx; %D_e = D_w = D_n = D_s;
-D_e = D;
-D_w = D;
-D_n = D;
-D_s = D;
-%% Finite Volume Coefficients
-aE = D_e;
-aW = D_w + F_w;
-aN = D_n ;
-aS = D_s + F_s;
-S_P = b*dx*dy;
-S_u = a*dx*dy; 
-% Modify coefficients near boundaries
-aE_b = 2 * D_e ;
-aW_b = 2 * D_w + F_w ;
-aN_b = 2 * D_n ;
-aS_b = 2 * D_s + F_s;
-%% Initialize temperature field
-phi = zeros(Ny+2, Nx+2);
+    % Finite Volume Coefficients
+    aE = D_e;
+    aW = D_w + F_w;
+    aN = D_n;
+    aS = D_s + F_s;
+    S_P = args.b * dx * dy;
+    S_u = args.a * dx * dy;
 
-% Apply Dirichlet Boundary Conditions
-phi(:, 1)   = Phi_Left; % Left boundary (x = 0)
-phi(:, end) = Phi_Right; % Right boundary (x = Lx)
-phi(1, :)   = Phi_Top; % Top boundary (y = Ly)
-phi(end, :) = Phi_Bottom; % Bottom boundary (y = 0)
-fprintf('The Initial Matrix With all Boundaries(Top Left Right Bottom Left \n')
-disp(phi)
+    % Modify coefficients near boundaries
+    aE_b = 2 * D_e;
+    aW_b = 2 * D_w + F_w;
+    aN_b = 2 * D_n;
+    aS_b = 2 * D_s + F_s;
 
+    % Initialize temperature field
+    phi = zeros(args.Ny+2, args.Nx+2);
 
-%% Iterative solver (Gauss-Seidel)
-tol = 1e-6;
-error = 1;
-iter = 0;
+    % Apply Dirichlet Boundary Conditions
+    phi(:, 1) = args.Phi_Left;
+    phi(:, end) = args.Phi_Right;
+    phi(1, :) = args.Phi_Top;
+    phi(end, :) = args.Phi_Bottom;
 
-while error > tol
-    phi_old = phi;
-    
-    % Update interior points
-    for i = 2:Nx+1
-        for j = 2:Ny+1
-            if i == 2  % Near left boundary
-                % fprintf('left boundary - %d,%d\n',j,i)
-                aW_eff = aW_b;
-            else
-                aW_eff = aW;
+    % Iterative solver (Gauss-Seidel)
+    tol = args.tol;
+    error = 1;
+    iter = 0;
+
+    while error > tol
+        phi_old = phi;
+
+        % Update interior points
+        for i = 2:args.Nx+1
+            for j = 2:args.Ny+1
+                % Adjust coefficients near boundaries
+                if i == 2
+                    aW_eff = aW_b;
+                else
+                    aW_eff = aW;
+                end
+
+                if i == args.Nx+1
+                    aE_eff = aE_b;
+                else
+                    aE_eff = aE;
+                end
+
+                if j == 2
+                    aS_eff = aS_b;
+                else
+                    aS_eff = aS;
+                end
+
+                if j == args.Ny+1
+                    aN_eff = aN_b;
+                else
+                    aN_eff = aN;
+                end
+
+                % FVM equation
+                aP = aW_eff + aE_eff + aN_eff + aS_eff + S_P;
+                phi(j, i) = (aE_eff * phi(j, i+1) + aW_eff * phi(j, i-1) + ...
+                             aN_eff * phi(j+1, i) + aS_eff * phi(j-1, i) + S_u) / aP;
             end
-%%
-            if i == Nx+1  % Near right boundary
-                % fprintf(' right boundary - %d,%d\n',j,i)
-                aE_eff = aE_b;
-            else
-                aE_eff = aE;
-            end
-%%
-            if j == 2  % Near Top boundary
-                % fprintf('  Top boundary - %d,%d\n',j,i)
-                aS_eff = aS_b;
-            else
-                aS_eff = aS;
-            end
-%%
-            if j == Ny+1  % Near Bottom boundary
-                % fprintf('   Bottom boundary - (%d,%d)\n',j,i)
-                aN_eff = aN_b;
-            else
-                aN_eff = aN;
-            end
-%%
-            % Compute new temperature using FVM equation
-            aP = aW_eff + aE_eff + aN_eff + aS_eff + S_P;
-            phi(j, i) = (aE_eff * phi(j, i+1) + aW_eff * phi(j, i-1) + ...
-                       aN_eff * phi(j+1, i) + aS_eff * phi(j-1, i) + S_u) / aP;
         end
+
+        % Compute error
+        error = max(max(abs(phi - phi_old)));
+        iter = iter + 1;
     end
-    
-    % Compute error
-    error = max(max(abs(phi - phi_old)));
-    iter = iter + 1;
+
+    % Output
+    disp(['Converged in ', num2str(iter), ' iterations']);
+    disp(['Final error: ', num2str(error)]);
 end
-%%
-fprintf('The Final T Matrix Temp at respective nodes internal + nearer boundary\n')
-disp(phi(2:end-1, 2:end-1))
-disp('&');
-disp(phi)
 
-disp(['Converged in ', num2str(iter), ' iterations with error ', num2str(error)]);
+%% function for Ploting 2D & 3D 
 
+function plotPhiResultsIn2Dim3Dim(varargin)
+    % This function plots the solution of the 2D convection-diffusion problem.
+    % It includes both 2D contour and 3D surface plots with boundary labels.
+    % 
+    % Inputs (key-value pairs):
+    %   'phi'        - Full phi matrix (with ghost cells)
+    %   'dx', 'dy'   - Cell dimensions
+    %   'Nx', 'Ny'   - Number of cells in x and y directions
+    %   'Phi_Left', 'Phi_Right', 'Phi_Top', 'Phi_Bottom' - Boundary phi values
+    %   'error'      - Final error value
 
-% Till here function is fine function call has to writen the T as Phi ,
-% please use phi insted of T
-% disp('flipud(T)')
-% disp(flipud(T))
+    % Parse Inputs
+    p = inputParser;
+    addParameter(p, 'phi', []);
+    addParameter(p, 'dx', 0);
+    addParameter(p, 'dy', 0);
+    addParameter(p, 'Nx', 0);
+    addParameter(p, 'Ny', 0);
+    addParameter(p, 'Phi_Left', 0);
+    addParameter(p, 'Phi_Right', 0);
+    addParameter(p, 'Phi_Top', 0);
+    addParameter(p, 'Phi_Bottom', 0);
+    addParameter(p, 'error', 0);
+    
+    parse(p, varargin{:});
+    
+    phi = p.Results.phi;
+    dx = p.Results.dx;
+    dy = p.Results.dy;
+    Nx = p.Results.Nx;
+    Ny = p.Results.Ny;
+    Phi_Left = p.Results.Phi_Left;
+    Phi_Right = p.Results.Phi_Right;
+    Phi_Top = p.Results.Phi_Top;
+    Phi_Bottom = p.Results.Phi_Bottom;
+    error = p.Results.error;
 
-% Plot solution
-figure;
-contourf(flipud(phi), 12, 'LineColor', 'none'); 
-colorbar;
-%clim([200 500]); % Fix color range
-colormap(jet); % Match Python's color map
-title('2D Heat Conduction - Finite Volume Method 2D Upwind.DS');
-xlabel('x (m)');
-ylabel('y (m)');
-%% Wall Labels 
-annotation('textbox',...
-    [0.429385416666667 0.973101265822784 0.134416666666666 0.0263713080168778],...
-    'String', {sprintf('\\phi_{Top} = %g', Phi_Top)},...
-    'FitBoxToText','off',...
-    'EdgeColor','none',...
-    'FontSize', 12, ...
-    'FontWeight', 'bold');
-annotation('textbox',...
-    [0.0114166666666666 0.48655063291139 0.0630625 0.06856540084388],...
-    'String', {sprintf('\\phi_{Left} = %g', Phi_Left)},...
-    'FitBoxToText','off',...
-    'EdgeColor','none',...
-    'FontSize', 12, ...
-    'FontWeight', 'bold');
+    %% 2D Contour Plot
+    figure;
+    contourf(flipud(phi), 12, 'LineColor', 'none'); 
+    colorbar;
+    colormap(jet); 
+    title('2D Heat Conduction - Finite Volume Method 2D Upwind.DS');
+    xlabel('x (m)');
+    ylabel('y (m)');
 
-annotation('textbox',...
-    [0.438020833333333 0.00843881856540084 0.14375 0.0358649789029536],...
-    'String', {sprintf('\\phi_{Bottom} = %g', Phi_Bottom)},...
-    'FitBoxToText','off',...
-    'EdgeColor','none',...
-    'FontSize', 12, ...
-    'FontWeight', 'bold');
-annotation('textbox',...
-    [0.909765625 0.518459915611814 0.0749999999999998 0.0527426160337549],...
-    'String', {sprintf('\\phi_{Right} = %g', Phi_Right)},...
-    'FitBoxToText','off',...
-    'EdgeColor','none',...
-    'FontSize', 12, ...
-    'FontWeight', 'bold');
+    %% Wall Boundary Labels
+    annotation('textbox', [0.43 0.97 0.13 0.03], ...
+        'String', {sprintf('\\phi_{Top} = %g', Phi_Top)}, ...
+        'EdgeColor','none', 'FontSize', 12, 'FontWeight', 'bold');
+    
+    annotation('textbox', [0.01 0.49 0.07 0.07], ...
+        'String', {sprintf('\\phi_{Left} = %g', Phi_Left)}, ...
+        'EdgeColor','none', 'FontSize', 12, 'FontWeight', 'bold');
+    
+    annotation('textbox', [0.44 0.01 0.14 0.04], ...
+        'String', {sprintf('\\phi_{Bottom} = %g', Phi_Bottom)}, ...
+        'EdgeColor','none', 'FontSize', 12, 'FontWeight', 'bold');
+    
+    annotation('textbox', [0.91 0.52 0.08 0.05], ...
+        'String', {sprintf('\\phi_{Right} = %g', Phi_Right)}, ...
+        'EdgeColor','none', 'FontSize', 12, 'FontWeight', 'bold');
 
-%%
-% Define cell-centered coordinates
-Px = 1:Nx;
-Py = 1:Ny;
-xP = (Px - 0.5) * dx;
-yP = (Py - 0.5) * dy;
-[Xp, Yp] = meshgrid(xP, yP);
+    %% Compute cell-center coordinates
+    Px = 1:Nx;
+    Py = 1:Ny;
+    xP = (Px - 0.5) * dx;
+    yP = (Py - 0.5) * dy;
+    [Xp, Yp] = meshgrid(xP, yP);
 
-% Extract internal phi values (removing ghost cells)
-phi_internal = phi(2:end-1, 2:end-1);
+    %% Extract internal phi values (remove ghost cells)
+    phi_internal = phi(2:end-1, 2:end-1);
 
-% 3D Surface Plot
-figure;
-surf(Xp, Yp, flipud(phi_internal), 'EdgeColor', 'none');
-colorbar;
-colormap(jet);
-title('3D Surface Plot of \phi at Cell Centers');
-xlabel('x (m)');
-ylabel('y (m)');
-zlabel('\phi (Temperature)');
-view(45, 30); % nice viewing angle
+    %% 3D Surface Plot
+    figure;
+    surf(Xp, Yp, flipud(phi_internal), 'EdgeColor', 'none');
+    colorbar;
+    colormap(jet);
+    title('3D Surface Plot of \phi at Cell Centers');
+    xlabel('x (m)');
+    ylabel('y (m)');
+    zlabel('\phi (Temperature)');
+    view(45, 30); 
+
+    %% Display phi matrix
+    fprintf('The Final T Matrix (internal and near-boundary nodes):\n');
+    disp(phi_internal)
+    disp('&');
+    disp(phi)
+    
+    fprintf('Converged in iterations with error = %.5e\n', error);
+end
+
