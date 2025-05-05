@@ -28,7 +28,7 @@ function RunUpwindDiffSchConvectionDiffusion(varargin)
     x_analytical = [0, x_P, L];
 
     % Generate Tridiagonal Matrix
-    [A, B] = UDSTriDiagonalCoeffMatrix('N', N, ...
+    [A, B] = QUICKTriDiagonalCoeffMatrix('N', N, ...
                                     'Diffusion', Gamma / dx, ...
                                     'Convection', rho * U, ...
                                     'PhiLeft', phi_A, ...
@@ -38,6 +38,19 @@ function RunUpwindDiffSchConvectionDiffusion(varargin)
     disp(A)
     disp(B)
     phi_FVM_Num_full = [phi_A; phi_numerical; phi_B];
+    %% 
+    % Generate Tridiagonal Matrix by UPWIND
+    [upwind_A, upwind_B] = CDSTriDiagonalCoeffMatrix('N', N, ...
+                                    'Diffusion', Gamma / dx, ...
+                                    'Convection', rho * U, ...
+                                    'PhiLeft', phi_A, ...
+                                    'PhiRight', phi_B);
+
+    upwind_phi_numerical = upwind_A \ upwind_B;
+    upwind_phi_FVM_Num_full = [phi_A; upwind_phi_numerical; phi_B];
+
+    %%
+
 
     % Analytical solution
     phi_analytical = AnalyticalSolution('U', U, 'rho', rho, 'Gamma', Gamma, ...
@@ -48,8 +61,20 @@ function RunUpwindDiffSchConvectionDiffusion(varargin)
     hold on;
     plot(x_analytical, phi_FVM_Num_full, 'rs-', 'LineWidth', 2, ...
          'MarkerSize', 8, 'DisplayName', 'FVM Numerical Solution');
+     %% plot upwind FVM
+    
+    plot(x_analytical, upwind_phi_FVM_Num_full, 's-', ...   % Square markers with solid line
+     'Color', 'g', ...                                   % Green line
+     'MarkerFaceColor', 'g', ...                         % Red filled markers
+     'MarkerEdgeColor', 'r', ...                         % Red marker edges
+     'LineWidth', 2, ...
+     'MarkerSize', 8, ...
+     'DisplayName', 'Upwind FVM Numerical Solution');
+
+    %%
     plot(x_analytical, phi_analytical, 'b--', 'LineWidth', 2, ...
          'DisplayName', 'Analytical Solution');
+   
     xlabel('Distance (m)', 'FontSize', 14);
     ylabel('\phi', 'FontSize', 14);
     title(sprintf('Numerical vs Analytical Solution (U = %.1f, N = %d)', U, N), 'FontSize', 14);
