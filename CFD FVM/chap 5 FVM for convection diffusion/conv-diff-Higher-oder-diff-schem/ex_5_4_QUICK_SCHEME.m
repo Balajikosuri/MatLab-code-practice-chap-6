@@ -82,26 +82,36 @@ function RunUpwindDiffSchConvectionDiffusion(varargin)
     grid on;
     hold off;
 
-    % Error Table
+    % Error calculations
     Difference = abs(phi_FVM_Num_full - phi_analytical');
     Percentage_Error = (Difference ./ phi_analytical') * 100;
-
-    T = table((0:N+1)', x_analytical', phi_FVM_Num_full, phi_analytical', ...
-              Difference, Percentage_Error, ...
+    
+    % Upwind method error calculations
+    Upwind_Difference = abs(upwind_phi_FVM_Num_full - phi_analytical');
+    
+    % Create table with additional columns
+    T = table((0:N+1)', x_analytical', phi_FVM_Num_full, upwind_phi_FVM_Num_full, ...
+              phi_analytical', Difference, Upwind_Difference, Percentage_Error, ...
               'VariableNames', {'Node', 'Distance_m', 'FVM_Solution', ...
-                                'Analytical_Solution', 'Difference', 'Percentage_Error'});
-
+                                'Upwind_Solution', 'Analytical_Solution', ...
+                                'Difference', 'Upwind_Difference', 'Percentage_Error'});
+    
+    % Display
     fprintf("\nThe No.Of Nodes: %d, Velocity: %.4f m/s\n", N, U)
-    fprintf('\n%-6s %-12s %-20s %-20s %-15s %-15s\n', 'Node', 'Distance(m)', ...
-            'FVM Solution', 'Analytical Solution', 'Difference', 'Percentage Error');
-    fprintf(repmat('-', 1, 100)); fprintf('\n');
-
+    fprintf('\n%-6s %-12s %-20s %-20s %-20s %-15s %-20s %-15s\n', ...
+            'Node', 'Distance(m)', 'QUICK Solution (FVM)', 'Upwind Solution (FVM)', ...
+            'Analytical Solution', 'Difference', 'Upwind Difference', 'Percentage Error');
+    fprintf(repmat('-', 1, 140)); fprintf('\n');
+    
     for k = 1:height(T)
-        fprintf('%-4d %-12.4f %-20.6f %-20.4f %-15.3f %-15.2f\n', ...
+        fprintf('%-4d %-12.4f %-20.6f %-20.6f %-20.4f %-15.4f %-20.4f %-15.2f\n', ...
                 T.Node(k), T.Distance_m(k), T.FVM_Solution(k), ...
-                T.Analytical_Solution(k), T.Difference(k), T.Percentage_Error(k));
+                T.Upwind_Solution(k), T.Analytical_Solution(k), ...
+                T.Difference(k), T.Upwind_Difference(k), T.Percentage_Error(k));
     end
+    
     disp('------ End of the Table ------------')
+
 end
 
 function phi = AnalyticalSolution(varargin)
