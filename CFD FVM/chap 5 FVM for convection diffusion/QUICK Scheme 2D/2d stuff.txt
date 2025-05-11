@@ -1,7 +1,7 @@
 clear; clc; close all;
 % Physical and boundary values
 Lx = 3;     Ly = 3;     
-Nx = 3;     Ny = 3;     
+Nx = 100;     Ny = 100;     
 dx = Lx / Nx;   dy = Ly / Ny;
 
 Phi_Left = 100; Phi_Right = 0;
@@ -90,15 +90,30 @@ function [phi, iterations, error] = solveConvDiff2DimByCentralDS(varargin)
     dy = Ly / Ny;
     
     % Coefficients for convection and diffusion
-    Fe = rouh*u; Fw = rouh*u;
-    Fn = rouh*v; Fs = rouh*v;
+    F_e = rouh*u; F_w = rouh*u;
+    F_n = rouh*v; F_s = rouh*v;
 
     D = Gamma / dx;
-    De = D;
-    Dw = D;
-    Dn = D;
-    Ds = D;
-
+    D_e = D;
+    D_w = D;
+    D_n = D;
+    D_s = D;
+    D_bdry = 2*D;
+    
+    % Finite Volume Coefficients
+    aW = D_w + F_w / 2;
+    aE = D_e - F_e / 2;
+    aN = D_n - F_n / 2;
+    aS = D_s + F_s / 2;
+    S_P = b * dx * dy;
+    S_u = a * dx * dy;
+    
+    % Modify coefficients near boundaries
+    aW_b = 2 * D_w + F_w / 2;
+    aE_b = 2 * D_e - F_e / 2;
+    aN_b = 2 * D_n - F_n / 2;
+    aS_b = 2 * D_s + F_s / 2;
+    
     % Initialize temperature field with boundary conditions
     phi = zeros(Ny + 2, Nx + 2);  % Including ghost cells
     phi(:, 1) = Phi_Left;          % Left boundary (x = 0)
@@ -109,68 +124,43 @@ function [phi, iterations, error] = solveConvDiff2DimByCentralDS(varargin)
     % Iterative solver (Gauss-Seidel)
     error = 1;
     iter = 0;
-    aWW_eff = -Fw/8;
-    aSS_eff = -Fs/8;
+    
     while error > tol
         phi_old = phi;
         
         % Update interior points
         for i = 2:Nx + 1
             for j = 2:Ny + 1
-                %% Apply boundary-specific coefficients
-                %%
+                % Apply boundary-specific coefficients
                 if i == 2 % left Boundary Nodes
-                    aW_eff = 0;
-                    S_P = 8*D/3 + 2*Fe/8 + Fe;
-                    S_u = (8*D/3 + 2*Fe/8 + Fw) * Phi_Left;
-                    % fprintf('line 138 i,j =>{%d,%d} \n',j,i) 
+                    aW_eff = aW_b;
                 else % interal left Boundary Nodes 
-                    if i == 3 %here (3-1 = 2) 2nd Node point also a boundary point
-                        aW_eff = Dw + 6*Fw/8 + Fe/8;
-                        S_P = -Fw/4;
-                        S_u = (-Fw/4) * Phi_Left;
-                    %fprintf('line 139 i,j =>{%d,%d} \n',j,i) 
-                    end
-                    aW_eff = D + 7*Fw/8 + Fe/8;
-                    S_P = 0;
-                    S_u = 0;
-
+                    aW_eff = aW;
                 end
-                %% 
+                
                 if i == Nx + 1 % Right Boundary Nodes
-                    aE_eff = 0;
-                    S_P  = 8*D_B/3 - F_B; 
-                    S_u  = (8*D_B/3 - F_B) * Phi_Right;
-
+                    aE_eff = aE_b;
                 else % for internal Right Boundary Nodes
-                    aE_eff = Dw + 6*Fw/8 + Fe/8;
-                    S_P = 0;
-                    S_u = 0;
-
+                    aE_eff = aE;
                 end
-                %%
+                
                 if j == 2 % Top Boundary Nodes
-                    aN_eff = 0;
+                    aN_eff = aN_b;
                 else %top to bottom internal boundary points
-                    aN_eff = Dw + 6*Fw/8 + Fe/8;
+                    aN_eff = aN;
                 end
-                 %% 
+                 
                 if j == Ny + 1 % bottom Boundary Nodes
                     % fprintf('line 154 i,j =>{%d,%d} \n',j,i) 
-                    aS_eff = 0;
+                    aS_eff = aS_b;
                 else % for internal Top Boundary Nodes
-                    if i == 3 %here (3-1 = 2) 2nd Node poiunt also a boundary point
-                    %fprintf('line 167 i,j =>{%d,%d} \n',j,i) 
-                    aS_eff = Ds + 7*Fs/8 + Fn/8;
-                    end
-                    aS_eff = Ds + 6*Fs/8 + Fn/8;
+                    aS_eff = aS;
                 end
-                %%
+                
                 % Compute new temperature using FVM equation
-                aP = aWW_eff  + aW_eff + aE_eff + aN_eff + aS_eff + S_P;
-                phi(j, i) = (aE_eff * phi(j, i + 1) + aW_eff * phi(j, i - 1) + aWW_eff * phi(j, i - 2) ...
-                             + aN_eff * phi(j - 1, i) + aS_eff * phi(j + 1, i) + aSS_eff * phi(j + 2, i) + S_u) / aP;
-                %%
+                aP = aW_eff + aE_eff + aN_eff + aS_eff + S_P;
+                phi(j, i) = (aE_eff * phi(j, i + 1) + aW_eff * phi(j, i - 1) + ...
+                             aN_eff * phi(j - 1, i) + aS_eff * phi(j + 1, i) + S_u) / aP;
             end
         end
         
@@ -278,4 +268,65 @@ function plotPhiResultsIn2Dim3Dim(varargin)
     
     fprintf('Converged in iterations with error = %.5e\n', error);
 end
+
+
+**********************************************************
+Node 1 : 
+
+aE = De + D_A/3 - 3*Fe/8;
+aN = Dn + D_bdry/3 - 3*Fn/8;
+Sp = 8*D_A/3 + 2*Fe/8 + F_A;
+Su = (8*D_A/3 + 2*Fe/8 + F_A) * phi_A;
+
+Node 2 : 
+
+aW = Dw + 7*Fw/8 + Fe/8; 
+aS = Ds + 7* Fs/8 + Fs/8; 
+aE = De - 3*Fe/8;
+aN = Dn - 3*Fn/8;
+Sp = -Fw/4;
+Su = (-Fw/4) * phi_A;
+
+Node 3 , 4 :
+
+aWW = -Fw/8;
+aSS = -Fw/8;
+aW  = Dw + 6*Fw/8 + Fe/8;
+
+aE  = Dw + 6*Fw/8 + Fe/8;
+
+
+Node 5 : 
+
+aWW = -Fw/8;
+aW  = Dw + D_B/3 + 6*Fw/8; 
+Sp  = 8*D_B/3 - F_B; 
+Su  = (8*D_B/3 - F_B) * phi_B;
+
+
+
+
+
+
+
+Node 1 :
+aE = 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
