@@ -1,7 +1,7 @@
 clear; clc; close all;
 % Physical and boundary values
 Lx = 3;     Ly = 3;     
-Nx = 3;     Ny = 3;     
+Nx = 100;     Ny = 100;     
 dx = Lx / Nx;   dy = Ly / Ny;
 
 Phi_Left = 100; Phi_Right = 0;
@@ -98,6 +98,7 @@ function [phi, iterations, error] = solveConvDiff2DimByCentralDS(varargin)
     D_w = D;
     D_n = D;
     D_s = D;
+    D_bdry = 2*D;
     
     % Finite Volume Coefficients
     aW = D_w + F_w / 2;
@@ -131,34 +132,35 @@ function [phi, iterations, error] = solveConvDiff2DimByCentralDS(varargin)
         for i = 2:Nx + 1
             for j = 2:Ny + 1
                 % Apply boundary-specific coefficients
-                if i == 2
+                if i == 2 % left Boundary Nodes
                     aW_eff = aW_b;
-                else
+                else % interal left Boundary Nodes 
                     aW_eff = aW;
                 end
                 
-                if i == Nx + 1
+                if i == Nx + 1 % Right Boundary Nodes
                     aE_eff = aE_b;
-                else
+                else % for internal Right Boundary Nodes
                     aE_eff = aE;
                 end
                 
-                if j == 2
-                    aS_eff = aS_b;
-                else
-                    aS_eff = aS;
-                end
-                
-                if j == Ny + 1
+                if j == 2 % Top Boundary Nodes
                     aN_eff = aN_b;
-                else
+                else %top to bottom internal boundary points
                     aN_eff = aN;
+                end
+                 
+                if j == Ny + 1 % bottom Boundary Nodes
+                    % fprintf('line 154 i,j =>{%d,%d} \n',j,i) 
+                    aS_eff = aS_b;
+                else % for internal Top Boundary Nodes
+                    aS_eff = aS;
                 end
                 
                 % Compute new temperature using FVM equation
                 aP = aW_eff + aE_eff + aN_eff + aS_eff + S_P;
                 phi(j, i) = (aE_eff * phi(j, i + 1) + aW_eff * phi(j, i - 1) + ...
-                             aN_eff * phi(j + 1, i) + aS_eff * phi(j - 1, i) + S_u) / aP;
+                             aN_eff * phi(j - 1, i) + aS_eff * phi(j + 1, i) + S_u) / aP;
             end
         end
         
