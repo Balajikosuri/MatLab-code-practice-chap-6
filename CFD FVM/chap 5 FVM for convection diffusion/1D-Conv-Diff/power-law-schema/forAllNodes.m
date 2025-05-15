@@ -2,8 +2,8 @@
 clc; clear; close all;
 
 % Physical and boundary values
-U = 2.5;
-N = 25;
+U = 10;
+N = 50;
 L = 1.0;
 Gamma = 0.1;
 rho = 1.0;
@@ -36,6 +36,8 @@ A(end,end) = 1;
 b(end) = phi_B;
 
 % Assemble equations for internal nodes
+Pe = F*dx/Gamma;
+fprintf("The Peclet Number %d",Pe);
 for i = 2:N
     Pe = F*dx/Gamma;
     aW = D*power_law(Pe) + max(F,0);
