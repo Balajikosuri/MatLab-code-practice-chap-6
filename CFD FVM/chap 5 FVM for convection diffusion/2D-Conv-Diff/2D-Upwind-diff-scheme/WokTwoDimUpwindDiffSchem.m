@@ -1,7 +1,7 @@
 clear; clc; close all;
 % Physical and boundary values
 %% "2D Conv- Diff By Upwind Diff Scheme."
-disp("2D Conv- Diff By Upwind Diff Sch.")
+disp("2D Conv- Diff By Upwind Diff Method.")
 %%
 Lx = 3;     Ly = 3;     
 Nx = 3;     Ny = 3;     
@@ -16,7 +16,7 @@ a = 10;
 b = 2;
 u = 1;      
 v = 4;
-[phi, iter, error] = solveConvDiff2DimByUpwindDS( ...
+[phi, iter, error] = solveConvDiff2DimByCentralDS( ...
     'Lx', Lx, 'Ly', Ly, ...
     'Nx', Nx, 'Ny', Ny, ...
     'Phi_Left', Phi_Left, 'Phi_Right', Phi_Right, ...
@@ -34,24 +34,20 @@ plotPhiResultsIn2Dim3Dim( ...
     'Phi_Top', Phi_Top, 'Phi_Bottom', Phi_Bottom, ...
     'error', error);
 
-%% function for solving 2D Upwind Diff Scheme
-function [phi, iter, error] = solveConvDiff2DimByUpwindDS(varargin)
-% This function solves the 2D convection-diffusion problem using the upwind finite volume method.
+
+%% function for solving 2D Central Diff Scheme
+function [phi, iterations, error] = solveConvDiff2DimByCentralDS(varargin)
+% solveConvDiff2DimByCentralDS solves 2D convection-diffusion using FVM with Gauss-Seidel
+%
+% Usage:
+%   [phi, iterations, error] = solveConvDiff2DimByCentralDS('Lx',1,'Ly',1,'Nx',20,'Ny',20,...)
 %
 % Key-Value Inputs:
-%   'Lx', 'Ly'        - Domain size (meters)
-%   'Nx', 'Ny'        - Number of control volumes in x and y directions
-%   'Phi_Left', 'Phi_Right', 'Phi_Top', 'Phi_Bottom' - Boundary temperature values
-%   'rouh'            - Density of the fluid
-%   'Gamma'           - Diffusivity
-%   'a', 'b'          - Source terms
-%   'u', 'v'          - Velocities in x and y directions
-%   'tol'             - (optional) Tolerance for convergence (default 1e-6)
-%
-% Outputs:
-%   phi  - Temperature field
-%   iter - Number of iterations
-%   error - Final error
+%   'Lx', 'Ly'            - Length of domain (m)
+%   'Nx', 'Ny'            - Number of control volumes
+%   'Phi_Left', etc.      - Boundary values
+%   'rouh', 'Gamma', 'a', 'b', 'u', 'v' - Fluid and source properties
+%   'tol'                 - Convergence tolerance
 
     % Parse inputs
     p = inputParser;
@@ -69,99 +65,116 @@ function [phi, iter, error] = solveConvDiff2DimByUpwindDS(varargin)
     addParameter(p, 'b', 0);
     addParameter(p, 'u', 0);
     addParameter(p, 'v', 0);
-    addParameter(p, 'tol', 1e-6); % Optional, default 1e-6
+    addParameter(p, 'tol', 1e-6);
     parse(p, varargin{:});
-    args = p.Results;
+    
+    % Extract variables
+    Lx = p.Results.Lx;
+    Ly = p.Results.Ly;
+    Nx = p.Results.Nx;
+    Ny = p.Results.Ny;
+    Phi_Left = p.Results.Phi_Left;
+    Phi_Right = p.Results.Phi_Right;
+    Phi_Top = p.Results.Phi_Top;
+    Phi_Bottom = p.Results.Phi_Bottom;
+    rouh = p.Results.rouh;
+    Gamma = p.Results.Gamma;
+    a = p.Results.a;
+    b = p.Results.b;
+    u = p.Results.u;
+    v = p.Results.v;
+    tol = p.Results.tol;
 
-    % Grid and Diffusion Parameters
-    dx = args.Lx / args.Nx;
-    dy = args.Ly / args.Ny;
+    % (Rest of your original function here, no changes needed)
+    % ----------------------------------------------------------------------
+    
+    % Grid parameters
+    dx = Lx / Nx;
+    dy = Ly / Ny;
+    
+    % Coefficients for convection and diffusion
+    F_e = rouh*u; F_w = rouh*u;
+    F_n = rouh*v; F_s = rouh*v;
 
-    % Diffusion and convection coefficients
-    D = args.Gamma / dx;
-    F_e = args.rouh * args.u;
-    F_w = args.rouh * args.u;
-    F_n = args.rouh * args.v;
-    F_s = args.rouh * args.v;
+    D = Gamma / dx;
     D_e = D;
     D_w = D;
     D_n = D;
     D_s = D;
-
+    
     % Finite Volume Coefficients
-    aW = D_w + F_w;
+    aW = D_w + F_w ;
     aE = D_e;
     aN = D_n;
-    aS = D_s + F_s;
-    S_P = args.b * dx * dy;
-    S_u = args.a * dx * dy;
-
+    aS = D_s + F_s ;
+    S_P = b * dx * dy;
+    S_u = a * dx * dy;
+    
     % Modify coefficients near boundaries
-    aW_b = 2 * D_w + F_w;
+    aW_b = 2 * D_w + F_w ;
     aE_b = 2 * D_e;
     aN_b = 2 * D_n;
-    aS_b = 2 * D_s + F_s;
-
-    % Initialize temperature field
-    phi = zeros(args.Ny+2, args.Nx+2);
-
-    % Apply Dirichlet Boundary Conditions
-    phi(:, 1) = args.Phi_Left;
-    phi(:, end) = args.Phi_Right;
-    phi(1, :) = args.Phi_Top;
-    phi(end, :) = args.Phi_Bottom;
-
+    aS_b = 2 * D_s + F_s ;
+    
+    % Initialize temperature field with boundary conditions
+    phi = zeros(Ny + 2, Nx + 2);  % Including ghost cells
+    phi(:, 1) = Phi_Left;          % Left boundary (x = 0)
+    phi(:, end) = Phi_Right;       % Right boundary (x = Lx)
+    phi(1, :) = Phi_Top;           % Top boundary (y = Ly)
+    phi(end, :) = Phi_Bottom;      % Bottom boundary (y = 0)
+    
     % Iterative solver (Gauss-Seidel)
-    tol = args.tol;
     error = 1;
     iter = 0;
-
+    
     while error > tol
         phi_old = phi;
-
+        
         % Update interior points
-        for i = 2:args.Nx + 1
-            for j = 2:args.Ny + 1
-                % Adjust coefficients near boundaries
+        for i = 2:Nx + 1
+            for j = 2:Ny + 1
+                % Apply boundary-specific coefficients
                 if i == 2 % left Boundary Nodes
                     aW_eff = aW_b;
                 else % interal left Boundary Nodes 
                     aW_eff = aW;
                 end
-
-                if i == args.Nx+1 % Right Boundary Nodes
+                
+                if i == Nx + 1 % Right Boundary Nodes
                     aE_eff = aE_b;
-                else              % for internal Right Boundary Nodes
+                else % for internal Right Boundary Nodes
                     aE_eff = aE;
                 end
-
-                if j == 2  % Top Boundary Nodes
+                
+                if j == 2 % Top Boundary Nodes
+                    % fprintf('balaji line 151 i,j =>{%d,%d} \n',j,i ) 
                     aN_eff = aN_b;
-                else       %top to bottom internal boundary points
+                else %top to bottom internal boundary points
                     aN_eff = aN;
                 end
-
-                if j == args.Ny+1 % bottom Boundary Nodes
+                 
+                if j == Ny + 1 % bottom Boundary Nodes
+                    % fprintf('line 154 i,j =>{%d,%d} \n',j,i) 
                     aS_eff = aS_b;
                 else % for internal Top Boundary Nodes
                     aS_eff = aS;
                 end
-
-                % FVM equation
+                
+                % Compute new temperature using FVM equation
                 aP = aW_eff + aE_eff + aN_eff + aS_eff + S_P;
-                phi(j, i) = (aE_eff * phi(j, i+1) + aW_eff * phi(j, i-1) + ...
-                             aN_eff * phi(j+1, i) + aS_eff * phi(j-1, i) + S_u) / aP;
+                phi(j, i) = (aE_eff * phi(j, i + 1) + aW_eff * phi(j, i - 1) + ...
+                             aN_eff * phi(j - 1, i) + aS_eff * phi(j + 1, i) + S_u) / aP;
             end
         end
-
+        
         % Compute error
         error = max(max(abs(phi - phi_old)));
         iter = iter + 1;
     end
+    
+    % Return the final solution and the number of iterations
+    iterations = iter;
 
-    % Output
-    disp(['Converged in ', num2str(iter), ' iterations']);
-    disp(['Final error: ', num2str(error)]);
 end
 
 %% function for Ploting 2D & 3D 
