@@ -38,19 +38,19 @@ end
 %% Boundary Conditions 
 for i = 1:nx
     for j = 1:ny
-        % Top boundary
+        %% Top boundary
         if i == 1
             % fprintf('balaji   (i,j) = (%f,%f)\n',i,j);
             an(i,j) = 0;
             Su(i,j) = 2 * DifCof * phi_top;
             if j == 1
                 aw(i,j) = 0;
-                Sp(i,j) = 2 * DifCof - 0.5;
+                Sp(i,j) = 2 * DifCof ;
                 % Su(i,j) = 2 * DifCof * phi_top;
                     
             elseif j==ny
                 ae(i,j) = 0;
-                Sp(i,j) = 2 * DifCof + 0.5;
+                Sp(i,j) = 2 * DifCof ;
                 % Su(i,j) = 2 * DifCof * phi_top;
             else
                 Sp(i,j) = 2 * DifCof;
@@ -63,11 +63,11 @@ for i = 1:nx
             Su(i,j) = 2 * DifCof * phi_bottom;
             if  j == 1
                 aw(i,j) = 0;
-                Sp(i,j) = 2 * DifCof - 1/2;
+                Sp(i,j) = 2 * DifCof ;
                 % fprintf('balaji line 39 (i,j) = (%f,%f)\n',i,j);
             elseif j == ny
                 ae(i,j) = 0;
-                Sp(i,j) = 2 * DifCof + 1/2;
+                Sp(i,j) = 2 * DifCof ;
             else
                 Sp(i,j) = 2 * DifCof;
             end
@@ -76,35 +76,35 @@ for i = 1:nx
         if j == 1
             % fprintf('balaji line 39 (i,j) = (%f,%f)\n',i,j);
             aw(i,j) = 0;
-            Sp(i,j) = Sp(i,j) - 0.5;
             if i == 1 
                 an(i,j) = 0;
-                Sp(i,j) = 2 * DifCof - 0.5;
+                Sp(i,j) = 2 * DifCof ;
                 Su(i,j) = 2 * DifCof * phi_top;
             elseif i == nx
                 % fprintf('85 balaji   (i,j) = (%f,%f)\n',i,j);
                 as(i,j) = 0;
-                Sp(i,j) = 2 * DifCof - 0.5;
+                Sp(i,j) = 2 * DifCof ;
                 Su(i,j) = 2 * DifCof * phi_bottom;
-            else
-                % fprintf('balaji   (i,j) = (%f,%f)\n',i,j);
-                Sp(i,j) = -1/2;
-                Su(i,j) = 0;
+            
             end
             
         end
-        % Right boundary
+        %% Right boundary
         if j == ny
+            ae(i,j) = 0;
+            % Sp(i,j) = 0.5;
             if i == 1
-
+                an(i,j) = 0;
+                Sp(i,j) = 2 * DifCof ;
+                Su(i,j) = 2 * DifCof * phi_top;
             elseif i == nx
-                %d
-            else
-                fprintf('balaji (i,j) = (%f,%f)\n',i,j);
+                as(i,j) = 0;
+                Sp(i,j) = 2 * DifCof ;
+                Su(i,j) = 2 * DifCof * phi_bottom ;
+            
             end
 
-            ae(i,j) = 0;
-            Sp(i,j) = 0.5;
+            
         end
 
         % Final ap after adding Sp
@@ -113,18 +113,24 @@ for i = 1:nx
 end
 
 %% Solve using TDMA (row-wise in x-direction)
-[T, run, max_res] = solve_tdma_rowwise(nx, ny, aw, ae, an, as, ap, Su, Phi);
-Phi = T;
-% disp(Phi);
+[Phi, run, max_res] = solve_tdma_rowwise(nx, ny, aw, ae, an, as, ap, Su, Phi);
+
+%% Print the solution matrix 
+disp('The solution matrix Phi is')
+disp(Phi);
 
 %% Frame with boundaries
 phiTop = phi_top;
 phiBottom = phi_bottom;
-T_full = frame_phi_full(Phi, phiTop, phiBottom);
+phiLeft = phi_left;
+Phi_full = frame_phi_full(Phi, phiTop, phiBottom,phiLeft);
 
+%% Print the BC walls in solution matrix 
+disp('Phi_full')
+disp( Phi_full)
 %% Plot Contour
 [X, Y] = meshgrid(1:(nx+2), 1:(ny+2));
-contourf(X, Y, flipud(T_full'), 'ShowText', 'on'); 
+contourf(X, Y, flipud(Phi_full'), 'ShowText', 'on'); 
 set(gca, 'YDir', 'reverse');               % ✅ flip y-axis for correct orientation
 colorbar;
 title('Temperature Distribution (^oC)', 'FontSize', 22);
@@ -204,12 +210,12 @@ function [T, run, max_res] = solve_tdma_rowwise(nx, ny, aw, ae, an, as, ap, Su, 
 end
 
 %% --- Function to Frame the Interior Matrix with Boundaries ---
-function Phi_full = frame_phi_full(Phi_interior, phiTop, phiBottom)
+function Phi_full = frame_phi_full(Phi_interior, phiTop, phiBottom,phiLeft)
     [ny, nx] = size(Phi_interior);
     Phi_full = zeros(ny + 2, nx + 2);
     Phi_full(2:end-1, 2:end-1) = Phi_interior;
     Phi_full(1, :) = phiTop;
     Phi_full(end, :) = phiBottom;
-    Phi_full(2:end-1, 1) = Phi_interior(:, 1);
+    Phi_full(2:end-1, 1) = phiLeft;
     Phi_full(2:end-1, end) = Phi_interior(:, end);
 end
