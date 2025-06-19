@@ -3,8 +3,8 @@ clear; clc; close all;
 %% "2D Conv- Diff By Upwind Diff Scheme."
 disp("2D Conv- Diff By Upwind Diff Method.")
 %%
-Lx = 3;     Ly = 3;     
-Nx = 3;     Ny = 3;     
+Lx = 2;     Ly = 2;     
+Nx = 2;     Ny = 2;     
 dx = Lx / Nx;   dy = Ly / Ny;
 
 Phi_Left = 100; Phi_Right = 0;

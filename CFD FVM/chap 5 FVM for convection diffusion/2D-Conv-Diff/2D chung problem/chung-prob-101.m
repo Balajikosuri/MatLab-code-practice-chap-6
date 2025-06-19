@@ -7,11 +7,11 @@ Lx = 2;     Ly = 2;
 Nx = 2;     Ny = 2;     
 dx = Lx / Nx;   dy = Ly / Ny;
 
-Phi_Left = 100; Phi_Right = 0;
-Phi_Top = 0;    Phi_Bottom = 100;
+% Phi_Left = 100; Phi_Right = 0;
+Phi_Top = 0;    Phi_Bottom = 40;
 
 rouh = 1;    
-Gamma = 1;
+Gamma = 0.000217;
 a = 10;
 b = 2;
 u = 1;      

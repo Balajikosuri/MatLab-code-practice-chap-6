@@ -1,10 +1,7 @@
 clear; clc; close all;
 % Physical and boundary values
-%% "2D Conv- Diff By Central Diff Scheme."
-disp("2D Conv- Diff By Central Diff Method.")
-%%
-Lx = 2;     Ly = 2;     
-Nx = 2;     Ny = 2;     
+Lx = 3;     Ly = 3;     
+Nx = 5;     Ny = 5;     
 dx = Lx / Nx;   dy = Ly / Ny;
 
 Phi_Left = 100; Phi_Right = 0;
@@ -93,29 +90,16 @@ function [phi, iterations, error] = solveConvDiff2DimByCentralDS(varargin)
     dy = Ly / Ny;
     
     % Coefficients for convection and diffusion
-    F_e = rouh*u; F_w = rouh*u;
-    F_n = rouh*v; F_s = rouh*v;
+    Fe = rouh*u; Fw = rouh*u;
+    Fn = rouh*v; Fs = rouh*v;
 
     D = Gamma / dx;
-    D_e = D;
-    D_w = D;
-    D_n = D;
-    D_s = D;
-    
-    % Finite Volume Coefficients
-    aW = D_w + F_w / 2;
-    aE = D_e - F_e / 2;
-    aN = D_n - F_n / 2;
-    aS = D_s + F_s / 2;
-    S_P = b * dx * dy;
-    S_u = a * dx * dy;
-    
-    % Modify coefficients near boundaries
-    aW_b = 2 * D_w + F_w ;
-    aE_b = 2 * D_e - F_e ;
-    aN_b = 2 * D_n - F_n ;
-    aS_b = 2 * D_s + F_s ;
-    
+    De = D;
+    Dw = D;
+    Dn = D;
+    Ds = D;
+    S_u= 0; S_P = 0 ;
+
     % Initialize temperature field with boundary conditions
     phi = zeros(Ny + 2, Nx + 2);  % Including ghost cells
     phi(:, 1) = Phi_Left;          % Left boundary (x = 0)
@@ -126,52 +110,88 @@ function [phi, iterations, error] = solveConvDiff2DimByCentralDS(varargin)
     % Iterative solver (Gauss-Seidel)
     error = 1;
     iter = 0;
-    
+    % % Coefficients
+    % aE_eff = De - (3/8)*Fe;
+    % aW_eff = Dw + (6/8)*Fw;
+    % aWW_eff = -(1/8)*Fw;
+    % aN_eff = Dn - (3/8)*Fn;
+    % aS_eff = Ds + (6/8)*Fs;
+    % aSS_eff = -(1/8)*Fs;
+    % % Modify coefficients near boundaries
+    % aW_bdry_nxt = 2 * D_w + F_w / 2;
+    % aE_bdry_nxt = 2 * D_e - F_e / 2;
+    % aN_bdry_nxt = 2 * D_n - F_n / 2;
+    % aS_bdry_nxt = 2 * D_s + F_s / 2;
+
     while error > tol
-        phi_old = phi;
-        
-        % Update interior points
-        for i = 2:Nx + 1
-            for j = 2:Ny + 1
-                % Apply boundary-specific coefficients
-                if i == 2 % left Boundary Nodes
-                    aW_eff = aW_b;
-                else % interal left Boundary Nodes 
-                    aW_eff = aW;
-                end
-                
-                if i == Nx + 1 % Right Boundary Nodes
-                    aE_eff = aE_b;
-                else % for internal Right Boundary Nodes
-                    aE_eff = aE;
-                end
-                
-                if j == 2 % Top Boundary Nodes
-                    % fprintf('balaji line 151 i,j =>{%d,%d} \n',j,i ) 
-                    aN_eff = aN_b;
-                else %top to bottom internal boundary points
-                    aN_eff = aN;
-                end
-                 
-                if j == Ny + 1 % bottom Boundary Nodes
-                    % fprintf('line 154 i,j =>{%d,%d} \n',j,i) 
-                    aS_eff = aS_b;
-                else % for internal Top Boundary Nodes
-                    aS_eff = aS;
-                end
-                
-                % Compute new temperature using FVM equation
-                aP = aW_eff + aE_eff + aN_eff + aS_eff + S_P;
-                phi(j, i) = (aE_eff * phi(j, i + 1) + aW_eff * phi(j, i - 1) + ...
-                             aN_eff * phi(j - 1, i) + aS_eff * phi(j + 1, i) + S_u) / aP;
+    phi_old = phi;
+
+    % Update interior points
+    for i = 2:Nx + 1
+        for j = 2:Ny + 1
+            
+            % Initialize all coefficients and source terms
+            aWW_eff = -Fw/8; aW_eff = Dw + 6*Fw/8 + Fe/8;
+            aE_eff  = De - 3*Fe/8 ;
+            aN_eff  = Dn - 3*Fn/8 ; 
+            aSS_eff = -Fs/8; aS_eff = Ds + 6*Fs/8 + Fn/8; 
+            S_P = 0;  S_u = 0;
+
+            % %% X-direction: Left and Right boundaries
+            % if i == 2  % Left boundary
+            %     fprintf('line 142 i,j =>{%d,%d} \n',j,i)
+            %     aW_eff = 0;
+            %     S_P = b*dx*dy;
+            % 
+            % elseif i == 3 % nxet to boundary node genrally 2nd Node point (Left to Right) 
+            %     aW_eff = Dw + 7*Fw/8 + Fe/8;
+            %     aE_eff = De - 3*Fe/8;
+            %     S_P = -Fw/4;
+            %     S_u = (-Fw/4) * Phi_Left;
+            % elseif i == Nx + 1  % Right boundary
+            %     aW_eff = Dw + 6*Fw/8 + Fe/8;
+            %     S_u  = S_P * Phi_Right;
+            %     aE_eff = 0;
+            % else  % Internal nodes
+            %     aW_eff = D + 7*Fw/8 + Fe/8;
+            %     aE_eff = Dw + 6*Fw/8 + Fe/8;
+            % end
+            % 
+            % %% Y-direction: Top and Bottom boundaries
+            % if j == 2  % Top boundary
+            %     aN_eff = 0;
+            % else
+            %     aN_eff = Dw + 6*Fw/8 + Fe/8;
+            % end
+            % 
+            % if j == Ny + 1  % Bottom boundary
+            %     aS_eff = 0;
+            % elseif i == 3
+            %     aS_eff = Ds + 7*Fs/8 + Fn/8;
+            % else
+            %     aS_eff = Ds + 6*Fs/8 + Fn/8;
+            % end
+            % 
+            %% Final coefficient assembly and update phi
+            aP = aWW_eff + aW_eff + aE_eff + aN_eff + aS_eff + S_P;
+
+            % Use different stencil depending on node location
+            if i == 2 || j == Ny + 1
+                phi(j, i) = (aE_eff * phi(j, i + 1) + aW_eff * phi(j, i - 1) ...
+                           + aN_eff * phi(j - 1, i) + aS_eff * phi(j + 1, i) + S_u) / aP;
+            else
+                phi(j, i) = (aE_eff * phi(j, i + 1) + aW_eff * phi(j, i - 1) + aWW_eff * phi(j, i - 2) ...
+                           + aN_eff * phi(j - 1, i) + aS_eff * phi(j + 1, i) + aSS_eff * phi(j + 2, i) + S_u) / aP;
             end
         end
-        
-        % Compute error
-        error = max(max(abs(phi - phi_old)));
-        iter = iter + 1;
     end
-    
+
+    % Compute error
+    error = max(max(abs(phi - phi_old)));
+    iter = iter + 1;
+    end
+
+
     % Return the final solution and the number of iterations
     iterations = iter;
 

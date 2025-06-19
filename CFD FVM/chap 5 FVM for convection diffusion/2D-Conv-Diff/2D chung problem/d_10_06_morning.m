@@ -3,8 +3,8 @@ clc; clear; close all
 % Domain
 L = 1.0;
 h = 0.04;
-Nx = 501;
-Ny = 41;
+Nx = 501;%501
+Ny = 41;%41
 
 dx = L / (Nx - 1);
 dy = h / (Ny - 1);
@@ -19,10 +19,10 @@ nu = 0.000217;
 phi = zeros(Ny, Nx);
 
 % Boundary conditions
-phi(1,:) = 40;      % Bottom wall
-phi(end,:) = 0;     % Top wall
-phi(2:end,1) = 0;   % Initial inlet (all zero)
-phi(1,1) = 40;      % Inlet bottom edge energized
+% phi(1,:) = 0;      % Top wall
+phi(end,:) = 40;     % Bottom wall
+phi(2:end,1) = 0;   % left wall inlet (all zero)
+% phi(1,1) = 8;      % Inlet bottom edge energized
 disp(phi)
 
 % Marching in x-direction

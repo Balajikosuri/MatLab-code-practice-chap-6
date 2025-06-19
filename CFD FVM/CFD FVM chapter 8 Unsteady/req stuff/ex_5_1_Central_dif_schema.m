@@ -1,4 +1,4 @@
-function RunUpwindDiffSchConvectionDiffusion(varargin)
+function RunCentrealDiffSchConvectionDiffusion(varargin)
     % Parse Name-Value pairs
     p = inputParser;
     
@@ -28,29 +28,14 @@ function RunUpwindDiffSchConvectionDiffusion(varargin)
     x_analytical = [0, x_P, L];
 
     % Generate Tridiagonal Matrix
-    [A, B] = QUICKTriDiagonalCoeffMatrix('N', N, ...
+    [A, B] = UDETriDiagonalCoeffMatrix('N', N, ...
                                     'Diffusion', Gamma / dx, ...
                                     'Convection', rho * U, ...
                                     'PhiLeft', phi_A, ...
                                     'PhiRight', phi_B);
 
     phi_numerical = A \ B;
-    disp(A)
-    disp(B)
     phi_FVM_Num_full = [phi_A; phi_numerical; phi_B];
-    %% 
-    % Generate Tridiagonal Matrix by UPWIND
-    [upwind_A, upwind_B] = CDSTriDiagonalCoeffMatrix('N', N, ...
-                                    'Diffusion', Gamma / dx, ...
-                                    'Convection', rho * U, ...
-                                    'PhiLeft', phi_A, ...
-                                    'PhiRight', phi_B);
-
-    upwind_phi_numerical = upwind_A \ upwind_B;
-    upwind_phi_FVM_Num_full = [phi_A; upwind_phi_numerical; phi_B];
-
-    %%
-
 
     % Analytical solution
     phi_analytical = AnalyticalSolution('U', U, 'rho', rho, 'Gamma', Gamma, ...
@@ -60,21 +45,9 @@ function RunUpwindDiffSchConvectionDiffusion(varargin)
     figure;
     hold on;
     plot(x_analytical, phi_FVM_Num_full, 'rs-', 'LineWidth', 2, ...
-         'MarkerSize', 8, 'DisplayName', 'QUICK FVM Numerical Solution');
-     %% plot upwind FVM
-    
-    plot(x_analytical, upwind_phi_FVM_Num_full, 's-', ...   % Square markers with solid line
-     'Color', 'g', ...                                   % Green line
-     'MarkerFaceColor', 'g', ...                         % Red filled markers
-     'MarkerEdgeColor', 'r', ...                         % Red marker edges
-     'LineWidth', 2, ...
-     'MarkerSize', 8, ...
-     'DisplayName', 'Upwind FVM Numerical Solution');
-
-    %%
+         'MarkerSize', 8, 'DisplayName', 'FVM Numerical Solution');
     plot(x_analytical, phi_analytical, 'b--', 'LineWidth', 2, ...
          'DisplayName', 'Analytical Solution');
-   
     xlabel('Distance (m)', 'FontSize', 14);
     ylabel('\phi', 'FontSize', 14);
     title(sprintf('Numerical vs Analytical Solution (U = %.1f, N = %d)', U, N), 'FontSize', 14);
@@ -82,36 +55,26 @@ function RunUpwindDiffSchConvectionDiffusion(varargin)
     grid on;
     hold off;
 
-    % Error calculations
+    % Error Table
     Difference = abs(phi_FVM_Num_full - phi_analytical');
     Percentage_Error = (Difference ./ phi_analytical') * 100;
-    
-    % Upwind method error calculations
-    Upwind_Difference = abs(upwind_phi_FVM_Num_full - phi_analytical');
-    
-    % Create table with additional columns
-    T = table((0:N+1)', x_analytical', phi_FVM_Num_full, upwind_phi_FVM_Num_full, ...
-              phi_analytical', Difference, Upwind_Difference, Percentage_Error, ...
-              'VariableNames', {'Node', 'Distance_m', 'FVM_Solution', ...
-                                'Upwind_Solution', 'Analytical_Solution', ...
-                                'Difference', 'Upwind_Difference', 'Percentage_Error'});
-    
-    % Display
-    fprintf("\nThe No.Of Nodes: %d, Velocity: %.4f m/s\n", N, U)
-    fprintf('\n%-6s %-12s %-20s %-20s %-20s %-15s %-20s %-15s\n', ...
-            'Node', 'Distance(m)', 'QUICK Solution (FVM)', 'Upwind Solution (FVM)', ...
-            'Analytical Solution', 'Difference', 'Upwind Difference', 'Percentage Error');
-    fprintf(repmat('-', 1, 140)); fprintf('\n');
-    
-    for k = 1:height(T)
-        fprintf('%-4d %-12.4f %-20.6f %-20.6f %-20.4f %-15.4f %-20.4f %-15.2f\n', ...
-                T.Node(k), T.Distance_m(k), T.FVM_Solution(k), ...
-                T.Upwind_Solution(k), T.Analytical_Solution(k), ...
-                T.Difference(k), T.Upwind_Difference(k), T.Percentage_Error(k));
-    end
-    
-    disp('------ End of the Table ------------')
 
+    T = table((0:N+1)', x_analytical', phi_FVM_Num_full, phi_analytical', ...
+              Difference, Percentage_Error, ...
+              'VariableNames', {'Node', 'Distance_m', 'FVM_Solution', ...
+                                'Analytical_Solution', 'Difference', 'Percentage_Error'});
+
+    fprintf("\nThe No.Of Nodes: %d, Velocity: %.4f m/s\n", N, U)
+    fprintf('\n%-6s %-12s %-20s %-20s %-15s %-15s\n', 'Node', 'Distance(m)', ...
+            'FVM Solution', 'Analytical Solution', 'Difference', 'Percentage Error');
+    fprintf(repmat('-', 1, 100)); fprintf('\n');
+
+    for k = 1:height(T)
+        fprintf('%-4d %-12.4f %-20.6f %-20.4f %-15.3f %-15.2f\n', ...
+                T.Node(k), T.Distance_m(k), T.FVM_Solution(k), ...
+                T.Analytical_Solution(k), T.Difference(k), T.Percentage_Error(k));
+    end
+    disp('------ End of the Table ------------')
 end
 
 function phi = AnalyticalSolution(varargin)
@@ -158,21 +121,15 @@ rho = 1.0;
 phi_A = 1;
 phi_B = 0;
 
-U = 0.2;
+U = 0.1;
 N = 5;
-U_values = [2.5];
-N_values = [5,];
+U_values = [0.1,2.5];
+N_values = [5,20];
 
 for i = 1:length(U_values)
     for j = 1:length(N_values)
         U = U_values(i); % Current velocity
         N = N_values(j); % Current number of nodes
-        dx = L/N;
-        F = rho*U;
-        D = Gamma/dx;
-        Pe = F/D;
-        fprintf("The Peclet Number = %.2f for N = %d, U = %.2f\n", Pe, N, U);
-        RunUpwindDiffSchConvectionDiffusion('U', U, 'N', N, 'L',L, 'Gamma', Gamma, 'rho', rho, 'phi_A', phi_A, 'phi_B', phi_B);
+        RunCentrealDiffSchConvectionDiffusion('U', U, 'N', N, 'L',L, 'Gamma', Gamma, 'rho', rho, 'phi_A', phi_A, 'phi_B', phi_B);
     end
 end
-

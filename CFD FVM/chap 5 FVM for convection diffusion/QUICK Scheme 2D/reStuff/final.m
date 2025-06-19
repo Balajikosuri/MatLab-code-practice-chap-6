@@ -1,10 +1,7 @@
 clear; clc; close all;
 % Physical and boundary values
-%% "2D Conv- Diff By Central Diff Scheme."
-disp("2D Conv- Diff By Central Diff Method.")
-%%
-Lx = 2;     Ly = 2;     
-Nx = 2;     Ny = 2;     
+Lx = 3;     Ly = 3;     
+Nx = 3;     Ny = 3;     
 dx = Lx / Nx;   dy = Ly / Ny;
 
 Phi_Left = 100; Phi_Right = 0;
@@ -111,10 +108,10 @@ function [phi, iterations, error] = solveConvDiff2DimByCentralDS(varargin)
     S_u = a * dx * dy;
     
     % Modify coefficients near boundaries
-    aW_b = 2 * D_w + F_w ;
-    aE_b = 2 * D_e - F_e ;
-    aN_b = 2 * D_n - F_n ;
-    aS_b = 2 * D_s + F_s ;
+    aW_b = 2 * D_w + F_w / 2;
+    aE_b = 2 * D_e - F_e / 2;
+    aN_b = 2 * D_n - F_n / 2;
+    aS_b = 2 * D_s + F_s / 2;
     
     % Initialize temperature field with boundary conditions
     phi = zeros(Ny + 2, Nx + 2);  % Including ghost cells
@@ -147,7 +144,6 @@ function [phi, iterations, error] = solveConvDiff2DimByCentralDS(varargin)
                 end
                 
                 if j == 2 % Top Boundary Nodes
-                    % fprintf('balaji line 151 i,j =>{%d,%d} \n',j,i ) 
                     aN_eff = aN_b;
                 else %top to bottom internal boundary points
                     aN_eff = aN;

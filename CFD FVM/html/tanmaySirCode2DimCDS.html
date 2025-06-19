@@ -1,0 +1,273 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>tanmaySirCode2DimCDS</title>
+<meta name="generator" content="MATLAB 24.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-06-13">
+<meta name="DC.source" content="tanmaySirCode2DimCDS.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<h2>Contents</h2>
+<div>
+<ul>
+<li>
+<a href="#2">The 2D Central Diff Scheme</a>
+</li>
+<li>
+<a href="#3">initializing the problem</a>
+</li>
+<li>
+<a href="#4">The Sloving the discritization system of equations by Gauss seidel iteration</a>
+</li>
+<li>
+<a href="#5">ploting</a>
+</li>
+<li>
+<a href="#6">central line temp</a>
+</li>
+</ul>
+</div>
+<pre class="codeinput">clear;close;clc;
+</pre>
+<h2 id="2">The 2D Central Diff Scheme</h2>
+<p>youtube video for ref <a href="https://youtu.be/RK3_YXumMMQ?si=mgdX_AjKnQgZhq2W">https://youtu.be/RK3_YXumMMQ?si=mgdX_AjKnQgZhq2W</a>
+</p>
+<pre class="codeinput">N = 101;
+domain_lenght = 1;
+Lx = domain_lenght;
+Ly = domain_lenght;
+h  = domain_lenght/(N-1);
+x  = 0 : h : domain_lenght;
+y  = 0 : h : domain_lenght;
+</pre>
+<h2 id="3">initializing the problem</h2>
+<pre class="codeinput">T_left =  1;
+T_right = 0;
+T_bottom = 0;
+T_top = 1;
+
+
+T(1,1:N) = T_left; <span class="comment">%left side wall;</span>
+T(1:N,1) = T_top; <span class="comment">% Top wall;</span>
+<span class="comment">% Temp matrix</span>
+T_new(1,1:N) = T_left; <span class="comment">%left side wall;</span>
+T_new(1:N,1) = T_top; <span class="comment">% Top wall;</span>
+
+T(:,N) = T_right;   <span class="comment">% Right side wall</span>
+T(N,:) = T_bottom;   <span class="comment">% Bottom wall</span>
+T_new(:,N) = T_right;   <span class="comment">% Right side wall</span>
+T_new(N,:) = T_bottom;   <span class="comment">% Bottom wall</span>
+
+
+rho  = 1;
+u    = 1;
+v    = 1;
+gamma = 0.01;
+<span class="comment">% Cell Peclet Number :</span>
+Pe = rho * u * h /gamma;
+</pre>
+<h2 id="4">The Sloving the discritization system of equations by Gauss seidel iteration</h2>
+<pre class="codeinput">error = 1;
+toll = 1e-7;
+F_e = rho * u * h;
+F_w = rho * u * h;
+F_s = rho * v * h;
+F_n = rho * v * h;
+
+<span class="keyword">while</span> error &gt; toll
+    <span class="keyword">for</span> i = 2 : N - 1
+        <span class="keyword">for</span> j = 2 : N - 1
+            a_E = gamma - F_e/2;
+            a_W = gamma + F_w/2;
+            a_N = gamma - F_n/2;
+            a_S = gamma + F_s/2;
+
+            a_P = a_E + a_W + a_N + a_S ;
+            <span class="comment">% fprintf('i,j are %f,%f \n',i,j);</span>
+            <span class="comment">% disp(T);</span>
+            T_new(i,j) = (a_E*T(i+1,j) + a_W *T(i-1,j) + a_N * T(i,j-1) + a_S*T(i,j+1))/a_P;
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+
+    error = 0;
+    <span class="keyword">for</span>  i = 2 : N-1
+        <span class="keyword">for</span> j = 2: N-1
+            error = error + abs(T(i,j) - T_new(i,j));
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    T = T_new;
+<span class="keyword">end</span>
+</pre>
+<h2 id="5">ploting</h2>
+<pre class="codeinput">x_dom = ((1:N)-1).*h;
+y_dom = 1- ((1:N)-1).*h;
+[X,Y] = meshgrid(x_dom,y_dom);
+contourf(X,Y,T,50);
+</pre>
+<img vspace="5" hspace="5" src="tanmaySirCode2DimCDS_01.png" alt=""> <h2 id="6">central line temp</h2>
+<pre class="codeinput">figure;
+plot(1-y,T(:,(N+1)/2),<span class="string">'--o'</span>);
+</pre>
+<img vspace="5" hspace="5" src="tanmaySirCode2DimCDS_02.png" alt=""> <p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2024b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+clear;close;clc;
+
+%% The 2D Central Diff Scheme 
+% youtube video for ref 
+% https://youtu.be/RK3_YXumMMQ?si=mgdX_AjKnQgZhq2W
+N = 101;
+domain_lenght = 1;
+Lx = domain_lenght;
+Ly = domain_lenght;
+h  = domain_lenght/(N-1);
+x  = 0 : h : domain_lenght;
+y  = 0 : h : domain_lenght;
+
+%% initializing the problem
+T_left =  1;
+T_right = 0;
+T_bottom = 0;
+T_top = 1;
+
+
+T(1,1:N) = T_left; %left side wall;
+T(1:N,1) = T_top; % Top wall;
+% Temp matrix 
+T_new(1,1:N) = T_left; %left side wall;
+T_new(1:N,1) = T_top; % Top wall;
+
+T(:,N) = T_right;   % Right side wall
+T(N,:) = T_bottom;   % Bottom wall
+T_new(:,N) = T_right;   % Right side wall
+T_new(N,:) = T_bottom;   % Bottom wall
+
+
+rho  = 1;
+u    = 1;
+v    = 1;
+gamma = 0.01;
+% Cell Peclet Number :
+Pe = rho * u * h /gamma;
+
+%% The Sloving the discritization system of equations by Gauss seidel iteration 
+error = 1; 
+toll = 1e-7;
+F_e = rho * u * h;
+F_w = rho * u * h;
+F_s = rho * v * h;
+F_n = rho * v * h;
+
+while error > toll  
+    for i = 2 : N - 1 
+        for j = 2 : N - 1
+            a_E = gamma - F_e/2;
+            a_W = gamma + F_w/2;
+            a_N = gamma - F_n/2;
+            a_S = gamma + F_s/2;
+
+            a_P = a_E + a_W + a_N + a_S ;
+            % fprintf('i,j are %f,%f \n',i,j);
+            % disp(T);
+            T_new(i,j) = (a_E*T(i+1,j) + a_W *T(i-1,j) + a_N * T(i,j-1) + a_S*T(i,j+1))/a_P;
+        end
+
+    end
+    
+    error = 0;
+    for  i = 2 : N-1
+        for j = 2: N-1
+            error = error + abs(T(i,j) - T_new(i,j));
+        end
+    end
+    T = T_new;
+end
+
+%% ploting 
+x_dom = ((1:N)-1).*h;
+y_dom = 1- ((1:N)-1).*h;
+[X,Y] = meshgrid(x_dom,y_dom);
+contourf(X,Y,T,50);
+%% central line temp 
+figure;
+plot(1-y,T(:,(N+1)/2),'REPLACE_WITH_DASH_DASHo');
+
+##### SOURCE END #####
+-->
+</body>
+</html>

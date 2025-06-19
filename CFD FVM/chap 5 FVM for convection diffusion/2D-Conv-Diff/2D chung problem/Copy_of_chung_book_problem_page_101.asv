@@ -5,7 +5,7 @@ clear; clc; close all;
 nx = 3;             % Number of points in x-direction
 ny = 3;              % Number of points in y-direction
 
-% ny = ny + 1 ;           %We are calculating the Discritization equation for this problem
+ny = ny + 1 ;           %We are calculating the Discritization equation for this problem
                       % right wa as aP 
 L = 0.2;              % Length in x-direction
 B = 0.04;             % Height in y-direction
@@ -15,7 +15,7 @@ phi_left = 0;         % left boundary temperature
 phi_bottom = 40;      % Bottom boundary temperature
 
 dx = L / nx;
-dy = B / ny-1;
+dy = B / ny;
 DifCof = gamma / dy;
 
 %% Initialize Coefficients
